@@ -379,11 +379,12 @@ def char_fn(xf, kf, scale=5.0, kFsteps=1000, device=device):
 
 
 def loss_fn_k(
-    xf, kf, ki, sim: Simulator, device=device, scale=5.0, kFsteps=1000, x_steps=10_000
+    xf, kf, ki=1.0, sim: Simulator=None, device=device, scale=5.0, kFsteps=1000, x_steps=10_000
 ):
     """
     Loss function comparing the L2 mean square loss of the characteristic function of the pdf
     to the target normal distribution with variance 1/kf.
+    ki and sim are not used, but kept optional to have the same API for all loss functions.
     """
 
     char_P_k, kFs = char_fn(xf, kf, scale, kFsteps, device=device)
