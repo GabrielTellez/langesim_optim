@@ -11,6 +11,7 @@ python = ">=3.9, <3.13"
 torch = "=2.0.0"
 numpy = "^1.26.0"
 matplotlib = "^3.8.0"
+scipy = "^1.11.3"
 
 
 [tool.poetry.group.test.dependencies]
