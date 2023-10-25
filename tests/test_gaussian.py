@@ -3,6 +3,7 @@ import numpy as np
 from langesim_optim import gaussian
 import pytest
 
+
 def test_gaussian():
     # Test case 1: check if the function returns the correct value for x=0 and var=1
     x = torch.tensor(0.0)
@@ -22,7 +23,6 @@ def test_gaussian():
         x = torch.tensor(0.0)
         var = torch.tensor(-1.0)
         gaussian(x, var)
-
 
 
 # Run the test by running `pytest` in the terminal where this test file is located.
