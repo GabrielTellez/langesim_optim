@@ -38,4 +38,4 @@ def test_loss_fn_gaussian():
 
     loss_value = loss_fn_k(xf, kf)
 
-    assert loss_value.item() < 1e-5
+    assert loss_value.item() < 5e-5

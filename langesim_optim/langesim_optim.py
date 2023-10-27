@@ -766,12 +766,15 @@ def k_from_sim(sim: Simulator):
     """
     Extracts ki, kf, tf and k(t) from a simulator.
     """
+# Este código solo sirve para continuous force. Para revisar.
     k = sim.force.k.cpu().detach().numpy()
     ki = float(sim.force.kappai.cpu().detach().numpy())
     kf = float(sim.force.kappaf.cpu().detach().numpy())
     tf = float(sim.force.tf.cpu().detach().numpy())
+#    if sim.force.continuous:
+#        k = [ki] + k + [kf]
 
-    def kappa_numpy(t, tf=tf, ki=ki, kf=kf):
+    def kappa_numpy(t, tf=tf, ki=ki, kf=kf, k=k):
         """
         Stiffness given as an interpolation between the values given by the list k.
 
