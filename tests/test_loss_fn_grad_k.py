@@ -54,4 +54,3 @@ def test_loss_fn_control_k_vars():
     # Test case 2: Test the output value of the function for linear k: should be
     # 1.0*blend=1e-1 (loss_fn_k is negligible of order 1e-5)
     assert torch.allclose(loss, torch.tensor(1e-1), rtol=1e-02, atol=1e-02)
-

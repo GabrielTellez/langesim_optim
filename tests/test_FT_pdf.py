@@ -52,4 +52,3 @@ def test_FT_pdf_with_custom_pdf():
 
     # Check if the result and kFs have the correct shapes
     assert result.shape == kFs.shape
-
