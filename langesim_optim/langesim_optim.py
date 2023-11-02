@@ -203,6 +203,42 @@ class BaseHarmonicForce(BaseForce):
         return 0.5 * self.kappa(t) * (x - self.center(t)) ** 2
 
 
+def make_interpolator(yi, yf, ti, tf, ylist, continuous=True):
+    """Builds a linear interpolation function y(t) from a list of values ylist
+    at times [ti, tf] and initial and final values yi, yf.
+
+    Args:
+        yi: initial value of y
+        yf: final value of y
+        ti: initial time
+        tf: final time
+        ylist (list): list of values of y at times [ti, tf]
+        continuous (bool): whether the interpolator is continuous at ti and tf
+    """
+
+    def interpolator(t, yi=yi, yf=yf, ti=ti, tf=tf, ylist=ylist):
+        if t <= ti:
+            return yi
+        if t >= tf:
+            return yf
+
+        if continuous:
+            ylist = [yi] + ylist + [yf]
+
+        N = len(ylist)
+        dt = tf / (N - 1)
+        idx = int(t / dt)
+        if idx >= N - 1:
+            y = ylist[N - 1]
+        else:
+            t1 = idx * dt
+            y = ylist[idx] + (ylist[idx + 1] - ylist[idx]) * (t - t1) * dt**-1
+
+        return y
+
+    return interpolator
+
+
 class VariableHarmonicForce(BaseHarmonicForce):
     """
     Harmonic oscillator force with a variable stiffness that is a learnable parameter.
@@ -322,7 +358,9 @@ def gaussian(x, var):
     )
 
 
-def FT_pdf(pdf, kf, scale=5.0, steps=10_000, kFs=None, kFsteps = 100, args=(), device=device):
+def FT_pdf(
+    pdf, kf, scale=5.0, steps=10_000, kFs=None, kFsteps=100, args=(), device=device
+):
     """
     Fourier transform (FT) of a probability density function (pdf).
     Assumes that the pdf is centered at 0.0.
@@ -379,7 +417,14 @@ def char_fn(xf, kf, scale=5.0, kFsteps=1000, device=device):
 
 
 def loss_fn_k(
-    xf, kf, ki=1.0, sim: Simulator=None, device=device, scale=5.0, kFsteps=1000, x_steps=10_000
+    xf,
+    kf,
+    ki=1.0,
+    sim: Simulator = None,
+    device=device,
+    scale=5.0,
+    kFsteps=1000,
+    x_steps=10_000,
 ):
     """
     Loss function comparing the L2 mean square loss of the characteristic function of the pdf
@@ -638,6 +683,7 @@ def train_loop_snapshots(
     tot_sims,
     ki,
     kf,
+    tf,
     optimizer,
     loss_fn,
     scheduler=None,
@@ -766,13 +812,13 @@ def k_from_sim(sim: Simulator):
     """
     Extracts ki, kf, tf and k(t) from a simulator.
     """
-# Este código solo sirve para continuous force. Para revisar.
+    # Este código solo sirve para continuous force. Para revisar.
     k = sim.force.k.cpu().detach().numpy()
     ki = float(sim.force.kappai.cpu().detach().numpy())
     kf = float(sim.force.kappaf.cpu().detach().numpy())
     tf = float(sim.force.tf.cpu().detach().numpy())
-#    if sim.force.continuous:
-#        k = [ki] + k + [kf]
+    #    if sim.force.continuous:
+    #        k = [ki] + k + [kf]
 
     def kappa_numpy(t, tf=tf, ki=ki, kf=kf, k=k):
         """
