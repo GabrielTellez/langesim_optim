@@ -1,5 +1,3 @@
-# FILEPATH: /hpcfs/home/fisica/gtellez/langesim_optim/tests/test_langesim_optim.py
-
 import torch
 from langesim_optim import k_from_sim, Simulator, VariableHarmonicForce
 import numpy as np
@@ -28,11 +26,12 @@ def test_k_from_sim():
     assert kf_out == approx(kf)
     assert tf_out == approx(tf)
     assert len(k) == len(k_in)
+    assert (k == k_in).all()
 
     # Test case 3: Test the kappa_numpy function
-    assert kappa_numpy(0) == approx(ki)
-    assert kappa_numpy(tf) == approx(kf)
-    assert ki < kappa_numpy(tf / 2) < kf
+    assert kappa_numpy(0) == approx(ki), f"kappa_numpy(0) = {kappa_numpy(0)} != {ki=}"
+    assert kappa_numpy(tf) == approx(kf), f"kappa_numpy({tf=}) = {kappa_numpy(tf)} != {kf=}"
+    assert ki < kappa_numpy(tf / 2) < kf, f"NOT: {ki=} < {kappa_numpy(tf/2)=} < {kf=}"
 
     # Test a few values
     for t in [0.01, 0.02, 0.05, 0.09]:

@@ -202,42 +202,95 @@ class BaseHarmonicForce(BaseForce):
         """
         return 0.5 * self.kappa(t) * (x - self.center(t)) ** 2
 
-
-def make_interpolator(yi, yf, ti, tf, ylist, continuous=True):
+class Interpolator():
     """Builds a linear interpolation function y(t) from a list of values ylist
     at times [ti, tf] and initial and final values yi, yf.
+    """
+    def __init__(self, yi, yf, ti, tf, ylist, continuous=True):
+        """Initializes the interpolatior function y(t) from a list of values ylist
+        at times [ti, tf] and initial and final values yi, yf.
 
-    Args:
+        Args: 
+            yi: initial value of y
+            yf: final value of y
+            ti: initial time
+            tf: final time
+            ylist (list): list of values of y at times [ti, tf]
+            continuous (bool): whether the interpolator is continuous at ti and tf
+        """ 
+        self.yi = yi
+        self.yf = yf
+        self.ti = ti
+        self.tf = tf
+        self.continuous = continuous
+        if continuous:
+            self.ylist = [yi] + ylist + [yf]
+        else:
+            self.ylist = ylist
+        self.N = len(self.ylist)
+        if self.N > 1:
+            self.dt = (self.tf - self.ti) / (self.N - 1)
+
+    def __call__(self, t):
+        if t <= self.ti:
+            return self.yi
+        if t >= self.tf:
+            return self.yf
+        
+        if self.N == 1:
+            # TSP case: return one constant value
+            y = self.ylist[0]
+        else:
+            idx = int( (t - self.ti) / self.dt )
+            if idx >= self.N - 1:
+                y = self.ylist[N - 1]
+            else:
+                t1 = idx * self.dt + self.ti
+                y = self.ylist[idx] + (self.ylist[idx + 1] - self.ylist[idx]) * (t - t1) * self.dt**-1
+        
+        return y
+
+def make_interpolator(yi, yf, ti, tf, ylist, continuous=True):
+    """Obsolete: refactored as class Interpolator.
+    
+    Builds a linear interpolation function y(t) from a list of values ylist
+    at times [ti, tf] and initial and final values yi, yf.
+
+    Args: 
         yi: initial value of y
         yf: final value of y
         ti: initial time
         tf: final time
         ylist (list): list of values of y at times [ti, tf]
         continuous (bool): whether the interpolator is continuous at ti and tf
-    """
-
-    def interpolator(t, yi=yi, yf=yf, ti=ti, tf=tf, ylist=ylist):
+    """ 
+    def interpolator(t, yi=yi, yf=yf, ti=ti, tf=tf, ylist=ylist, continuous=continuous):
         if t <= ti:
             return yi
         if t >= tf:
             return yf
 
         if continuous:
-            ylist = [yi] + ylist + [yf]
-
-        N = len(ylist)
-        dt = tf / (N - 1)
-        idx = int(t / dt)
-        if idx >= N - 1:
-            y = ylist[N - 1]
+            yl = [yi] + ylist + [yf]
         else:
-            t1 = idx * dt
-            y = ylist[idx] + (ylist[idx + 1] - ylist[idx]) * (t - t1) * dt**-1
-
+            yl = ylist
+    
+        N = len(yl)
+        if N == 1:
+            # TSP case: only one constant value
+            y = yl[0]
+        else:
+            dt = (tf - ti) / (N - 1)
+            idx = int( (t - ti) / dt)
+            if idx >= N - 1:
+                y = yl[N - 1]
+            else:
+                t1 = idx * dt + ti
+                y = yl[idx] + (yl[idx + 1] - yl[idx]) * (t - t1) * dt**-1
+        
         return y
-
+    
     return interpolator
-
 
 class VariableHarmonicForce(BaseHarmonicForce):
     """
@@ -820,38 +873,40 @@ def k_from_sim(sim: Simulator):
     #    if sim.force.continuous:
     #        k = [ki] + k + [kf]
 
-    def kappa_numpy(t, tf=tf, ki=ki, kf=kf, k=k):
-        """
-        Stiffness given as an interpolation between the values given by the list k.
+    # def kappa_numpy(t, tf=tf, ki=ki, kf=kf, k=k):
+    #     """
+    #     Stiffness given as an interpolation between the values given by the list k.
 
-        Args:
-            t: time to compute the stiffness
+    #     Args:
+    #         t: time to compute the stiffness
 
-        Returns:
-            float: the stiffness value at time t
-        """
+    #     Returns:
+    #         float: the stiffness value at time t
+    #     """
 
-        # print(f"{k=}, {type(k)=}")
+    #     # print(f"{k=}, {type(k)=}")
 
-        if t <= 0.0:
-            return ki
-        if t >= tf:
-            return kf
+    #     if t <= 0.0:
+    #         return ki
+    #     if t >= tf:
+    #         return kf
 
-        N = len(k)
+    #     N = len(k)
 
-        dt = tf / (N + 1)
-        idx = int(t / dt) - 1
-        if idx >= 0 and idx < N - 1:
-            t1 = (idx + 1) * dt
-            kap = k[idx] + (k[idx + 1] - k[idx]) * (t - t1) * dt**-1
-        else:
-            # Interpolate at the edges between ki and kf
-            if t >= 0.0 and t < dt:
-                kap = ki + (k[0] - ki) * t * dt**-1
-            if t >= N * dt and t <= tf:
-                kap = k[N - 1] + (kf - k[N - 1]) * (t - N * dt) * dt**-1
+    #     dt = tf / (N + 1)
+    #     idx = int(t / dt) - 1
+    #     if idx >= 0 and idx < N - 1:
+    #         t1 = (idx + 1) * dt
+    #         kap = k[idx] + (k[idx + 1] - k[idx]) * (t - t1) * dt**-1
+    #     else:
+    #         # Interpolate at the edges between ki and kf
+    #         if t >= 0.0 and t < dt:
+    #             kap = ki + (k[0] - ki) * t * dt**-1
+    #         if t >= N * dt and t <= tf:
+    #             kap = k[N - 1] + (kf - k[N - 1]) * (t - N * dt) * dt**-1
 
-        return kap
+    #     return kap
+
+    kappa_numpy = Interpolator(yi=ki, yf=kf, ti=0.0, tf=tf, ylist=k, continuous=sim.force.continuous)
 
     return k, ki, kf, tf, kappa_numpy

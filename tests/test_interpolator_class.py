@@ -1,16 +1,16 @@
 import numpy as np
-from langesim_optim import make_interpolator
+from langesim_optim import Interpolator
 from pytest import approx
 
 
-def test_make_interpolator_continuous():
+def test_interpolator_class_continuous():
     # Test case 1: Test the output type of the function
     yi = 1.0
     yf = 2.0
     ti = 1.0
     tf = 3.0
     ylist = [1.5, 1.75]
-    interpolator = make_interpolator(yi, yf, ti, tf, ylist)
+    interpolator = Interpolator(yi, yf, ti, tf, ylist)
     assert callable(interpolator)
 
     # Test case 2: Test the output values of the function at the boundaries
@@ -24,14 +24,14 @@ def test_make_interpolator_continuous():
     # Test case 4: middle value
     assert np.isclose(interpolator(ti + (tf - ti) / 2), (ylist[0] + ylist[1]) / 2)
 
-def test_make_interpolator_discontinuous():
+def test_interpolator_class_discontinuous():
     # Test case 5: Test the function with continuous=False
     yi = 1.0
     yf = 2.0
     ti = 1.0
     tf = 3.0
     ylist = [1.7, 2.75]
-    interpolator = make_interpolator(yi, yf, ti, tf, ylist, continuous=False)
+    interpolator = Interpolator(yi, yf, ti, tf, ylist, continuous=False)
     assert interpolator(ti) == yi
     assert interpolator(tf) == yf
     assert np.isclose(
@@ -43,7 +43,7 @@ def test_make_interpolator_discontinuous():
     assert np.isclose(interpolator(ti + (tf - ti) / 2), (ylist[0] + ylist[1]) / 2)
 
 
-def test_interpolator():
+def test_interpolator_class_extra():
     ki = 0.0
     kf = 6.0
     tf = 0.1
@@ -51,7 +51,7 @@ def test_interpolator():
     tot_steps = int(tf / dt)
     k_in = list(range(1, 6))
 
-    interpolator = make_interpolator(ki, kf, 0, tf, k_in, continuous=True)
+    interpolator = Interpolator(ki, kf, 0, tf, k_in, continuous=True)
 
     # Test case 3: Test the interpolator function
     assert interpolator(0) == approx(ki), f"interpolator(0) = {interpolator(0)} != {ki=}"
@@ -65,13 +65,13 @@ def test_interpolator():
             expected_value
         ), f"interpolator({t}) = {interpolator(t)} != {expected_value}"
 
-def test_interpolator_TSP():
+def test_interpolator_class_TSP():
     ki = 1.0
     kf = 2.0
     kl = [3.0]
     tf = 1.0
 
-    interpolator = make_interpolator(ki, kf, 0, tf, kl, continuous=False)
+    interpolator = Interpolator(ki, kf, 0, tf, kl, continuous=False)
 
     assert interpolator(0) == approx(ki)
     assert interpolator(tf) == approx(kf)
