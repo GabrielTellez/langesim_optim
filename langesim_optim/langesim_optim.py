@@ -224,7 +224,8 @@ class Interpolator():
         self.tf = tf
         self.continuous = continuous
         if continuous:
-            self.ylist = [yi] + ylist + [yf]
+            # warning: self.ylist = [yi] + ylist + [yf] does not concatenate numpy arrays
+            self.ylist = [yi, *ylist, yf]
         else:
             self.ylist = ylist
         self.N = len(self.ylist)
@@ -865,7 +866,7 @@ def k_from_sim(sim: Simulator):
     """
     Extracts ki, kf, tf and k(t) from a simulator.
     """
-    # Este código solo sirve para continuous force. Para revisar.
+    # Este código solo sirve para discontinuous force. Para revisar.
     k = sim.force.k.cpu().detach().numpy()
     ki = float(sim.force.kappai.cpu().detach().numpy())
     kf = float(sim.force.kappaf.cpu().detach().numpy())

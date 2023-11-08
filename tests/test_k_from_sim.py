@@ -65,9 +65,9 @@ def test_k_from_sim_discontinuous():
     assert len(k) == len(k_in)
 
     # Test case 3: Test the kappa_numpy function
-    assert kappa_numpy(0) == approx(ki)
-    assert kappa_numpy(tf) == approx(kf)
-    assert ki < kappa_numpy(tf / 2) < kf
+    assert kappa_numpy(-0.001) == approx(ki), f"kappa_numpy(0) = {kappa_numpy(0)} != {ki=}"
+    assert kappa_numpy(tf+0.001) == approx(kf), f"kappa_numpy({tf=}) = {kappa_numpy(tf)} != {kf=}"
+    assert ki < kappa_numpy(tf / 2) < kf, f"NOT: {ki=} < {kappa_numpy(tf/2)=} < {kf=}"
 
     # Test a few values
     kinit = 1.0
@@ -77,3 +77,32 @@ def test_k_from_sim_discontinuous():
         assert kappa_numpy(t) == approx(
             expected_value
         ), f"kappa_numpy({t}) = {kappa_numpy(t)} != {expected_value}"
+
+def test_k_from_sim_consistency():
+    """Tests if kappa_numpy yield the same results as force.kappa"""
+    ki = 0.0
+    kf = 6.0
+    tf = 0.1
+    dt = 0.01
+    tot_steps = int(tf / dt)
+    k_in = list(range(1, 6))
+    force = VariableHarmonicForce(kappai=ki, kappaf=kf, tf=tf, k=k_in, continuous=True)
+    sim = Simulator(dt=dt, tot_steps=tot_steps, force=force)
+    k, ki_out, kf_out, tf_out, kappa_numpy = k_from_sim(sim)
+    for t in [0.01, 0.02, 0.05, 0.09]:
+        assert kappa_numpy(t) == approx(sim.force.kappa(t).item()), f"kappa_numpy({t}) = {kappa_numpy(t)} != {sim.force.kappa(t).item()=}"
+
+def test_k_from_sim_consistency_discontinuous():
+    """Tests if kappa_numpy yield the same results as force.kappa in
+    discontinuous case"""
+    ki = 0.0
+    kf = 6.0
+    tf = 0.1
+    dt = 0.01
+    tot_steps = int(tf / dt)
+    k_in = list(range(1, 6))
+    force = VariableHarmonicForce(kappai=ki, kappaf=kf, tf=tf, k=k_in, continuous=False)
+    sim = Simulator(dt=dt, tot_steps=tot_steps, force=force)
+    k, ki_out, kf_out, tf_out, kappa_numpy = k_from_sim(sim)
+    for t in [0.01, 0.02, 0.05, 0.09]:
+        assert kappa_numpy(t) == approx(force.kappa(t).item()), f"kappa_numpy({t}) = {kappa_numpy(t)} != {force.kappa(t)}"
