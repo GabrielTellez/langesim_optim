@@ -1,5 +1,6 @@
 import numpy as np
 from langesim_optim import make_interpolator
+from langesim_optim import interpolate
 from pytest import approx
 
 
@@ -80,4 +81,28 @@ def test_interpolator_TSP():
     assert interpolator(3*tf/4) == approx(kl[0])
 
 
-    
+    def test_interpolate_function_continuous():
+        # Test case: Test the output values of the function at the boundaries
+        # and middle values
+        yi = 1.0
+        yf = 2.0
+        ti = 0.0
+        tf = 1.0
+        ylist = [1.5, 1.75]
+        assert interpolate(ti, yi, yf, ti, tf, ylist) == yi
+        assert interpolate(tf, yi, yf, ti, tf, ylist) == yf
+        assert np.isclose(interpolate(ti + (tf - ti) / 3, yi, yf, ti, tf, ylist), ylist[0])
+        assert np.isclose(interpolate(ti + 2 * (tf - ti) / 3, yi, yf, ti, tf, ylist), ylist[1])
+
+
+def test_interpolate_discontinuous():
+    # Test case: Test the output values of the function at the boundaries and intermediate points
+    yi = 1.0
+    yf = 2.0
+    ti = 0.0
+    tf = 1.0
+    ylist = [1.7, 2.75]
+    assert interpolate(ti, yi, yf, ti, tf, ylist, continuous=False) == yi
+    assert interpolate(tf, yi, yf, ti, tf, ylist, continuous=False) == yf
+    assert np.isclose(interpolate(ti + (tf - ti) / 3, yi, yf, ti, tf, ylist, continuous=False), ylist[0]+(ylist[1]-ylist[0])/3)
+    assert np.isclose(interpolate(ti + 2 * (tf - ti) / 3, yi, yf, ti, tf, ylist, continuous=False), ylist[0]+2*(ylist[1]-ylist[0])/3)
