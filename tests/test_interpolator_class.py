@@ -18,11 +18,16 @@ def test_interpolator_class_continuous():
     assert interpolator(tf) == yf, f"{interpolator(tf)=} != {yf=}"
 
     # Test case 3: Test the output values of the function at the intermediate points
-    assert interpolator(ti + (tf - ti) / 3) == ylist[0], f"{interpolator(ti + (tf - ti) / 3)=} != {ylist[0]=}"
-    assert interpolator(ti + 2 * (tf - ti) / 3) == ylist[1], f"{interpolator(ti + 2 * (tf - ti) / 3)=} != {ylist[1]=}"
+    assert (
+        interpolator(ti + (tf - ti) / 3) == ylist[0]
+    ), f"{interpolator(ti + (tf - ti) / 3)=} != {ylist[0]=}"
+    assert (
+        interpolator(ti + 2 * (tf - ti) / 3) == ylist[1]
+    ), f"{interpolator(ti + 2 * (tf - ti) / 3)=} != {ylist[1]=}"
 
     # Test case 4: middle value
     assert np.isclose(interpolator(ti + (tf - ti) / 2), (ylist[0] + ylist[1]) / 2)
+
 
 def test_interpolator_class_discontinuous():
     # Test case 5: Test the function with continuous=False
@@ -54,8 +59,12 @@ def test_interpolator_class_extra():
     interpolator = Interpolator(ki, kf, 0, tf, k_in, continuous=True)
 
     # Test case 3: Test the interpolator function
-    assert interpolator(0) == approx(ki), f"interpolator(0) = {interpolator(0)} != {ki=}"
-    assert interpolator(tf) == approx(kf), f"interpolator({tf=}) = {interpolator(tf)} != {kf=}"
+    assert interpolator(0) == approx(
+        ki
+    ), f"interpolator(0) = {interpolator(0)} != {ki=}"
+    assert interpolator(tf) == approx(
+        kf
+    ), f"interpolator({tf=}) = {interpolator(tf)} != {kf=}"
     assert ki < interpolator(tf / 2) < kf, f"NOT: {ki=} < {interpolator(tf/2)=} < {kf=}"
 
     # Test a few values
@@ -64,6 +73,7 @@ def test_interpolator_class_extra():
         assert interpolator(t) == approx(
             expected_value
         ), f"interpolator({t}) = {interpolator(t)} != {expected_value}"
+
 
 def test_interpolator_class_TSP():
     ki = 1.0
@@ -75,9 +85,6 @@ def test_interpolator_class_TSP():
 
     assert interpolator(0) == approx(ki)
     assert interpolator(tf) == approx(kf)
-    assert interpolator(tf/2) == approx(kl[0])
-    assert interpolator(tf/4) == approx(kl[0])
-    assert interpolator(3*tf/4) == approx(kl[0])
-
-
-    
+    assert interpolator(tf / 2) == approx(kl[0])
+    assert interpolator(tf / 4) == approx(kl[0])
+    assert interpolator(3 * tf / 4) == approx(kl[0])

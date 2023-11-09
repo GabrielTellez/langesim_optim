@@ -24,6 +24,7 @@ def test_gaussian():
         var = torch.tensor(-1.0)
         gaussian(x, var)
 
+
 def test_gaussian_non_centered():
     """Test the gaussian function with non-centered input."""
     # Test case 1: check if the function returns the correct value for x=center and var=2.0
@@ -33,8 +34,3 @@ def test_gaussian_non_centered():
     result = gaussian(x, var=var, center=center)
     expected_result = 1.0 / (2.0 * np.pi * var) ** 0.5
     assert torch.allclose(result, expected_result)
-
- 
-
-
-

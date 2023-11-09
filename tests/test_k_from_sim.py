@@ -30,7 +30,9 @@ def test_k_from_sim():
 
     # Test case 3: Test the kappa_numpy function
     assert kappa_numpy(0) == approx(ki), f"kappa_numpy(0) = {kappa_numpy(0)} != {ki=}"
-    assert kappa_numpy(tf) == approx(kf), f"kappa_numpy({tf=}) = {kappa_numpy(tf)} != {kf=}"
+    assert kappa_numpy(tf) == approx(
+        kf
+    ), f"kappa_numpy({tf=}) = {kappa_numpy(tf)} != {kf=}"
     assert ki < kappa_numpy(tf / 2) < kf, f"NOT: {ki=} < {kappa_numpy(tf/2)=} < {kf=}"
 
     # Test a few values
@@ -65,8 +67,12 @@ def test_k_from_sim_discontinuous():
     assert len(k) == len(k_in)
 
     # Test case 3: Test the kappa_numpy function
-    assert kappa_numpy(-0.001) == approx(ki), f"kappa_numpy(0) = {kappa_numpy(0)} != {ki=}"
-    assert kappa_numpy(tf+0.001) == approx(kf), f"kappa_numpy({tf=}) = {kappa_numpy(tf)} != {kf=}"
+    assert kappa_numpy(-0.001) == approx(
+        ki
+    ), f"kappa_numpy(0) = {kappa_numpy(0)} != {ki=}"
+    assert kappa_numpy(tf + 0.001) == approx(
+        kf
+    ), f"kappa_numpy({tf=}) = {kappa_numpy(tf)} != {kf=}"
     assert ki < kappa_numpy(tf / 2) < kf, f"NOT: {ki=} < {kappa_numpy(tf/2)=} < {kf=}"
 
     # Test a few values
@@ -77,6 +83,7 @@ def test_k_from_sim_discontinuous():
         assert kappa_numpy(t) == approx(
             expected_value
         ), f"kappa_numpy({t}) = {kappa_numpy(t)} != {expected_value}"
+
 
 def test_k_from_sim_consistency():
     """Tests if kappa_numpy yield the same results as force.kappa"""
@@ -90,7 +97,10 @@ def test_k_from_sim_consistency():
     sim = Simulator(dt=dt, tot_steps=tot_steps, force=force)
     k, ki_out, kf_out, tf_out, kappa_numpy = k_from_sim(sim)
     for t in [0.01, 0.02, 0.05, 0.09]:
-        assert kappa_numpy(t) == approx(sim.force.kappa(t).item()), f"kappa_numpy({t}) = {kappa_numpy(t)} != {sim.force.kappa(t).item()=}"
+        assert kappa_numpy(t) == approx(
+            sim.force.kappa(t).item()
+        ), f"kappa_numpy({t}) = {kappa_numpy(t)} != {sim.force.kappa(t).item()=}"
+
 
 def test_k_from_sim_consistency_discontinuous():
     """Tests if kappa_numpy yield the same results as force.kappa in
@@ -105,4 +115,6 @@ def test_k_from_sim_consistency_discontinuous():
     sim = Simulator(dt=dt, tot_steps=tot_steps, force=force)
     k, ki_out, kf_out, tf_out, kappa_numpy = k_from_sim(sim)
     for t in [0.01, 0.02, 0.05, 0.09]:
-        assert kappa_numpy(t) == approx(force.kappa(t).item()), f"kappa_numpy({t}) = {kappa_numpy(t)} != {force.kappa(t)}"
+        assert kappa_numpy(t) == approx(
+            force.kappa(t).item()
+        ), f"kappa_numpy({t}) = {kappa_numpy(t)} != {force.kappa(t)}"

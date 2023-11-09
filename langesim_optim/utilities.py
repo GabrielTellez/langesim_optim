@@ -8,6 +8,7 @@ from .loss_functions import gaussian
 from typing import Optional, List
 import matplotlib.pyplot as plt
 
+
 def train_loop(
     epochs,
     sim: Simulator,
@@ -339,6 +340,8 @@ def k_from_sim(sim: Simulator):
 
     #     return kap
 
-    kappa_numpy = Interpolator(yi=ki, yf=kf, ti=0.0, tf=tf, ylist=k, continuous=sim.force.continuous)
+    kappa_numpy = Interpolator(
+        yi=ki, yf=kf, ti=0.0, tf=tf, ylist=k, continuous=sim.force.continuous
+    )
 
     return k, ki, kf, tf, kappa_numpy

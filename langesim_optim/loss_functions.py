@@ -3,12 +3,13 @@ from .simulator_forces import Simulator, device
 import torch
 import numpy as np
 
+
 def gaussian(x, var=1.0, center=0.0):
     """Gaussian function with mean center and variance var."""
     if var < 0:
         raise ValueError("variance has to be positive")
     return (2.0 * torch.tensor(np.pi) * var) ** -0.5 * torch.exp(
-        -((x-center)**2) / (2.0 * var)
+        -((x - center) ** 2) / (2.0 * var)
     )
 
 
@@ -172,4 +173,3 @@ def loss_fn_eq_work(
         xf, kf, ki, sim, device=device, scale=scale, kFsteps=kFsteps, x_steps=x_steps
     ) + blend * loss_fn_work(xf, ki, kf, sim)
     return loss
-

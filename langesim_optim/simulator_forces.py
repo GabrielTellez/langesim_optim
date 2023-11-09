@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from typing import Optional, List
 import numpy as np
+from .interpolator import interpolate
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -275,41 +276,56 @@ class VariableHarmonicForce(BaseHarmonicForce):
         Returns:
             torch.tensor: the stiffness value at time t
         """
-        if t <= torch.tensor(0.0):
-            return self.kappai
-        if t >= self.tf:
-            return self.kappaf
+        return interpolate(
+            t,
+            yi=self.kappai,
+            yf=self.kappaf,
+            ti=0,
+            tf=self.tf,
+            ylist=self.k,
+            continuous=self.continuous,
+        )
 
-        N = len(self.k)
-        if self.continuous:
-            dt = self.tf / (N + 1)
-            idx = int(t / dt) - 1
-            if idx >= 0 and idx < N - 1:
-                t1 = (idx + 1) * dt
-                k = self.k[idx] + (self.k[idx + 1] - self.k[idx]) * (t - t1) * dt**-1
-            else:
-                # Interpolate at the edges between kappai and kappaf
-                if t >= 0.0 and t < dt:
-                    k = self.kappai + (self.k[0] - self.kappai) * t * dt**-1
-                if t >= N * dt and t <= self.tf:
-                    k = (
-                        self.k[N - 1]
-                        + (self.kappaf - self.k[N - 1]) * (t - N * dt) * dt**-1
-                    )
-        else:  # non continuous: no interpolation at the edges with kappai and kappaf
-            # If N == 1 dt=inf but it works because idx=0 always
-            dt = self.tf / (N - 1)
-            idx = int(t / dt)
-            # print(f"{N=}, {dt=}, {idx=}")
-            if idx >= N - 1:
-                k = self.k[N - 1]
-            else:
-                t1 = idx * dt
-                k = self.k[idx] + (self.k[idx + 1] - self.k[idx]) * (t - t1) * dt**-1
+    # def kappa_old(self, t):
+    #     """
+    #     Stiffness given as an interpolation between the values given by the list k.
 
-        return k
+    #     Args:
+    #         t: time to compute the stiffness
 
+    #     Returns:
+    #         torch.tensor: the stiffness value at time t
+    #     """
+    #     if t <= torch.tensor(0.0):
+    #         return self.kappai
+    #     if t >= self.tf:
+    #         return self.kappaf
 
+    #     N = len(self.k)
+    #     if self.continuous:
+    #         dt = self.tf / (N + 1)
+    #         idx = int(t / dt) - 1
+    #         if idx >= 0 and idx < N - 1:
+    #             t1 = (idx + 1) * dt
+    #             k = self.k[idx] + (self.k[idx + 1] - self.k[idx]) * (t - t1) * dt**-1
+    #         else:
+    #             # Interpolate at the edges between kappai and kappaf
+    #             if t >= 0.0 and t < dt:
+    #                 k = self.kappai + (self.k[0] - self.kappai) * t * dt**-1
+    #             if t >= N * dt and t <= self.tf:
+    #                 k = (
+    #                     self.k[N - 1]
+    #                     + (self.kappaf - self.k[N - 1]) * (t - N * dt) * dt**-1
+    #                 )
+    #     else:  # non continuous: no interpolation at the edges with kappai and kappaf
+    #         # If N == 1 dt=inf but it works because idx=0 always
+    #         dt = self.tf / (N - 1)
+    #         idx = int(t / dt)
+    #         # print(f"{N=}, {dt=}, {idx=}")
+    #         if idx >= N - 1:
+    #             k = self.k[N - 1]
+    #         else:
+    #             t1 = idx * dt
+    #             k = self.k[idx] + (self.k[idx + 1] - self.k[idx]) * (t - t1) * dt**-1
 
-
-
+    #     return k
