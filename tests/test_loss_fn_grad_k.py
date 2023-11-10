@@ -2,7 +2,7 @@ import torch
 from langesim_optim import (
     loss_fn_grad_k,
     Simulator,
-    VariableHarmonicForce,
+    VariableStiffnessHarmonicForce,
     device,
     loss_fn_k,
     loss_fn_control_k_vars,
@@ -15,7 +15,7 @@ def test_loss_fn_grad_k_cst():
     kf = 1.0
     tf = 1.0
     k = [1.0] * 5
-    force = VariableHarmonicForce(kappai=ki, kappaf=kf, tf=tf, k=k, continuous=True)
+    force = VariableStiffnessHarmonicForce(kappai=ki, kappaf=kf, tf=tf, k=k, continuous=True)
     sim = Simulator(force=force)
     loss = loss_fn_grad_k(ki, kf, sim)
     assert loss.shape == ()
@@ -29,7 +29,7 @@ def test_loss_fn_grad_k_linear():
     kf = 1.0
     tf = 1.0
     k = list(range(1, 5))
-    force = VariableHarmonicForce(kappai=ki, kappaf=kf, tf=tf, k=k, continuous=False)
+    force = VariableStiffnessHarmonicForce(kappai=ki, kappaf=kf, tf=tf, k=k, continuous=False)
     sim = Simulator(force=force)
     loss = loss_fn_grad_k(ki, kf, sim)
 
@@ -43,7 +43,7 @@ def test_loss_fn_control_k_vars():
     ki = 1.0
     tf = 1.0
     k = list(range(1, 5))
-    force = VariableHarmonicForce(kappai=ki, kappaf=kf, tf=tf, k=k, continuous=False)
+    force = VariableStiffnessHarmonicForce(kappai=ki, kappaf=kf, tf=tf, k=k, continuous=False)
     sim = Simulator(force=force)
     blend = 1e-1
     loss = loss_fn_control_k_vars(xf, kf, ki, sim, blend=blend)

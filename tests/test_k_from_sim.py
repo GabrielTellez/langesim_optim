@@ -1,5 +1,5 @@
 import torch
-from langesim_optim import k_from_sim, Simulator, VariableHarmonicForce
+from langesim_optim import k_from_sim, Simulator, VariableStiffnessHarmonicForce
 import numpy as np
 from pytest import approx
 
@@ -12,7 +12,7 @@ def test_k_from_sim():
     dt = 0.01
     tot_steps = int(tf / dt)
     k_in = list(range(1, 6))
-    force = VariableHarmonicForce(kappai=ki, kappaf=kf, tf=tf, k=k_in, continuous=True)
+    force = VariableStiffnessHarmonicForce(kappai=ki, kappaf=kf, tf=tf, k=k_in, continuous=True)
     sim = Simulator(dt=dt, tot_steps=tot_steps, force=force)
     k, ki_out, kf_out, tf_out, kappa_numpy = k_from_sim(sim)
     assert isinstance(k, np.ndarray)
@@ -51,7 +51,7 @@ def test_k_from_sim_discontinuous():
     dt = 0.01
     tot_steps = int(tf / dt)
     k_in = list(range(1, 6))
-    force = VariableHarmonicForce(kappai=ki, kappaf=kf, tf=tf, k=k_in, continuous=False)
+    force = VariableStiffnessHarmonicForce(kappai=ki, kappaf=kf, tf=tf, k=k_in, continuous=False)
     sim = Simulator(dt=dt, tot_steps=tot_steps, force=force)
     k, ki_out, kf_out, tf_out, kappa_numpy = k_from_sim(sim)
     assert isinstance(k, np.ndarray)
@@ -93,7 +93,7 @@ def test_k_from_sim_consistency():
     dt = 0.01
     tot_steps = int(tf / dt)
     k_in = list(range(1, 6))
-    force = VariableHarmonicForce(kappai=ki, kappaf=kf, tf=tf, k=k_in, continuous=True)
+    force = VariableStiffnessHarmonicForce(kappai=ki, kappaf=kf, tf=tf, k=k_in, continuous=True)
     sim = Simulator(dt=dt, tot_steps=tot_steps, force=force)
     k, ki_out, kf_out, tf_out, kappa_numpy = k_from_sim(sim)
     for t in [0.01, 0.02, 0.05, 0.09]:
@@ -111,7 +111,7 @@ def test_k_from_sim_consistency_discontinuous():
     dt = 0.01
     tot_steps = int(tf / dt)
     k_in = list(range(1, 6))
-    force = VariableHarmonicForce(kappai=ki, kappaf=kf, tf=tf, k=k_in, continuous=False)
+    force = VariableStiffnessHarmonicForce(kappai=ki, kappaf=kf, tf=tf, k=k_in, continuous=False)
     sim = Simulator(dt=dt, tot_steps=tot_steps, force=force)
     k, ki_out, kf_out, tf_out, kappa_numpy = k_from_sim(sim)
     for t in [0.01, 0.02, 0.05, 0.09]:

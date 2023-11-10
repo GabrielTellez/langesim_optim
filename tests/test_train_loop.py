@@ -1,10 +1,9 @@
-# FILEPATH: /hpcfs/home/fisica/gtellez/langesim_optim/tests/test_langesim_optim.py
 
 import torch
 from langesim_optim import (
     train_loop,
     Simulator,
-    VariableHarmonicForce,
+    VariableStiffnessHarmonicForce,
     loss_fn_k,
     device,
 )
@@ -23,7 +22,7 @@ def test_train_loop_output_type_length():
     tot_sims = 100
     lr = 1.0
 
-    force = VariableHarmonicForce(kappai=ki, kappaf=kf, tf=tf, steps=3)
+    force = VariableStiffnessHarmonicForce(kappai=ki, kappaf=kf, tf=tf, steps=3)
     sim = Simulator(dt=dt, tot_steps=tot_steps, force=force, device=device)
 
     optimizer = SGD(params=sim.parameters(), lr=lr)
@@ -68,7 +67,7 @@ def test_train_loop_TSP():
     tot_sims = 100_000
 
     lr = 100.0
-    force = VariableHarmonicForce(kappai=ki, kappaf=kf, tf=tf, k=[kf], continuous=False)
+    force = VariableStiffnessHarmonicForce(kappai=ki, kappaf=kf, tf=tf, k=[kf], continuous=False)
     sim = Simulator(force=force, dt=dt, tot_steps=tot_steps, device=device)
 
     optimizer = torch.optim.SGD(params=sim.parameters(), lr=lr)

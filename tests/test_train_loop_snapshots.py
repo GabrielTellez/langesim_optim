@@ -2,7 +2,7 @@ import torch
 from langesim_optim import (
     train_loop_snapshots,
     Simulator,
-    VariableHarmonicForce,
+    VariableStiffnessHarmonicForce,
     loss_fn_k,
     device,
 )
@@ -22,7 +22,7 @@ def test_train_loop_snapshots():
     lr = 1.0
     snapshot_step = 2
 
-    force = VariableHarmonicForce(kappai=ki, kappaf=kf, tf=tf, steps=3)
+    force = VariableStiffnessHarmonicForce(kappai=ki, kappaf=kf, tf=tf, steps=3)
     sim = Simulator(dt=dt, tot_steps=tot_steps, force=force, device=device)
 
     optimizer = SGD(params=sim.parameters(), lr=lr)

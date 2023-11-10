@@ -202,8 +202,47 @@ class BaseHarmonicForce(BaseForce):
         """
         return 0.5 * self.kappa(t) * (x - self.center(t)) ** 2
 
+def validate_init_interpolation_list(yi, yf, ylist=None, steps=None, noise=0.25, ylist_name="ylist"):
+    """Validate and initialize a list of initial parameters to use for
+    interpolation
+    
+    Args:
+        yi (float): initial value
+        yf (float): final value
+        ylist (list, optional): list of values. Defaults to None.
+        steps (int, optional): number of steps. Defaults to None.
 
-class VariableHarmonicForce(BaseHarmonicForce):
+    Raises:
+        ValueError: If the list of values is not provided and the number of steps is not an integer greater than 1.
+
+    Returns:
+        ylist_ini: the list of values to interpolate between. To be used in nn.Parameter.
+    
+    """
+    if steps is None and ylist is None:
+        raise ValueError(
+            "Please provide initial number of `steps` or a list of initial values for {ylist_name}"
+        )
+    if ylist is None:
+        if steps < 1 or not (isinstance(steps, int)):
+            raise ValueError(
+                "{steps=} has to be an integer greater or equal than 1."
+            )
+        else:
+            # start with a linear interpolation between yi and yf plus some noise
+            ylist_ini = torch.linspace(yi, yf, steps) + noise * (
+                yf - yi
+            ) * torch.randn(steps, dtype=torch.float)
+    else:
+        if steps is None or steps == len(ylist):
+            ylist_ini = torch.tensor(ylist, dtype=torch.float)
+        else:
+            raise ValueError(
+                f"List of initial values of {ylist_name} {ylist=} has to be equal to provided {steps=}"
+            )
+    return ylist_ini
+
+class VariableStiffnessHarmonicForce(BaseHarmonicForce):
     """
     Harmonic oscillator force with a variable stiffness that is a learnable parameter.
     The stiffness is made of linear interpolation of segments.
@@ -235,37 +274,13 @@ class VariableHarmonicForce(BaseHarmonicForce):
         """
         super().__init__()
 
-        if steps is None and k is None:
-            raise ValueError(
-                "Please provide initial number of `steps` or a list of initial values `k`"
-            )
-
         self.register_buffer("kappai", torch.tensor(kappai, dtype=torch.float))
         self.register_buffer("kappaf", torch.tensor(kappaf, dtype=torch.float))
         self.register_buffer("tf", torch.tensor(tf, dtype=torch.float))
         self.continuous = continuous
-
-        if k is None:
-            if steps < 1 or not (isinstance(steps, int)):
-                raise ValueError(
-                    "{steps=} has to be an integer greater or equal than 1."
-                )
-            else:
-                # start with a linear interpolation between kappai and kappaf plus some noise
-                k_ini = torch.linspace(kappai, kappaf, steps) + 0.25 * (
-                    kappaf - kappai
-                ) * torch.randn(steps, dtype=torch.float)
-                self.k = nn.parameter.Parameter(data=k_ini, requires_grad=True)
-        else:
-            if steps is None or steps == len(k):
-                self.k = nn.parameter.Parameter(
-                    data=torch.tensor(k, dtype=torch.float), requires_grad=True
-                )
-            else:
-                raise ValueError(
-                    f"List of initial values of the stiffness {k=} has to be equal to provided {steps=}"
-                )
-
+        k_ini = validate_init_interpolation_list(kappai, kappaf, k, steps, ylist_name="stiffness")
+        self.k = nn.parameter.Parameter(data=k_ini, requires_grad=True)
+ 
     def kappa(self, t):
         """
         Stiffness given as an interpolation between the values given by the list k.
@@ -286,46 +301,72 @@ class VariableHarmonicForce(BaseHarmonicForce):
             continuous=self.continuous,
         )
 
-    # def kappa_old(self, t):
-    #     """
-    #     Stiffness given as an interpolation between the values given by the list k.
+class VariableCenterHarmonicForce(BaseHarmonicForce):
+    """
+    Harmonic oscillator force with a variable center that is a learnable parameter.
+    """
 
-    #     Args:
-    #         t: time to compute the stiffness
+    def __init__(
+        self,
+        centeri: float,
+        centerf: float,
+        tf: float,
+        steps: Optional[int] = None,
+        center_list: Optional[List] = None,
+        kappa0: float = 1.0,
+        continuous=True,
+    ):
+        """
+        Initializes the force with a center that is defined at `steps` values
+        of time and linearly interpolated between.
 
-    #     Returns:
-    #         torch.tensor: the stiffness value at time t
-    #     """
-    #     if t <= torch.tensor(0.0):
-    #         return self.kappai
-    #     if t >= self.tf:
-    #         return self.kappaf
+        Args:
+            centeri (float): initial center
+            centerf (float): final center
+            tf (float): final time of the protocol
+            steps (int, optional): number time steps where the center value is given
+            center (list, optional): the initial center given by a list of
+            `steps` values
+            kappa0 (float): fixed stiffness
+            countinuous (bool): whether the center is continuous at initial and final times,
+            thus equal to centeri and centerf.
+        """
+        super().__init__()
 
-    #     N = len(self.k)
-    #     if self.continuous:
-    #         dt = self.tf / (N + 1)
-    #         idx = int(t / dt) - 1
-    #         if idx >= 0 and idx < N - 1:
-    #             t1 = (idx + 1) * dt
-    #             k = self.k[idx] + (self.k[idx + 1] - self.k[idx]) * (t - t1) * dt**-1
-    #         else:
-    #             # Interpolate at the edges between kappai and kappaf
-    #             if t >= 0.0 and t < dt:
-    #                 k = self.kappai + (self.k[0] - self.kappai) * t * dt**-1
-    #             if t >= N * dt and t <= self.tf:
-    #                 k = (
-    #                     self.k[N - 1]
-    #                     + (self.kappaf - self.k[N - 1]) * (t - N * dt) * dt**-1
-    #                 )
-    #     else:  # non continuous: no interpolation at the edges with kappai and kappaf
-    #         # If N == 1 dt=inf but it works because idx=0 always
-    #         dt = self.tf / (N - 1)
-    #         idx = int(t / dt)
-    #         # print(f"{N=}, {dt=}, {idx=}")
-    #         if idx >= N - 1:
-    #             k = self.k[N - 1]
-    #         else:
-    #             t1 = idx * dt
-    #             k = self.k[idx] + (self.k[idx + 1] - self.k[idx]) * (t - t1) * dt**-1
+        self.register_buffer("centeri", torch.tensor(centeri, dtype=torch.float))
+        self.register_buffer("centerf", torch.tensor(centerf, dtype=torch.float))
+        self.register_buffer("tf", torch.tensor(tf, dtype=torch.float))
+        self.continuous = continuous
+        center_ini = validate_init_interpolation_list(centeri, centerf, center_list, steps, ylist_name="center")
+        self.center_list = nn.parameter.Parameter(data=center_ini, requires_grad=True)
+        self.kappa0 = kappa0
 
-    #     return k
+    def center(self, t):
+        """
+        Center given as an interpolation between the values given by the list center.
+
+        Args:
+            t: time to compute the center
+
+        Returns:
+            torch.tensor: the center value at time t
+        """
+        return interpolate(
+            t,
+            yi=self.centeri,
+            yf=self.centerf,
+            ti=0,
+            tf=self.tf,
+            ylist=self.center_list,
+            continuous=self.continuous,
+        )
+
+    def kappa(self, t):
+        """
+        Stiffness given as a constant value kappa0.
+
+        Args:
+            t: time to compute the stiffness
+        """
+        return self.kappa0
+

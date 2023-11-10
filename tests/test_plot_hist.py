@@ -3,7 +3,7 @@ from langesim_optim import (
     plot_test_hist,
     Simulator,
     plot_protocols,
-    VariableHarmonicForce,
+    VariableStiffnessHarmonicForce,
 )
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,7 +34,7 @@ def test_plot_protocols():
     dt = 0.01
     tf = 0.100
     tot_steps = int(tf / dt)
-    force = VariableHarmonicForce(kappai=ki, kappaf=kf, tf=tf, steps=3)
+    force = VariableStiffnessHarmonicForce(kappai=ki, kappaf=kf, tf=tf, steps=3)
     sim = Simulator(dt=dt, tot_steps=tot_steps, force=force)
     fig = plot_protocols(sim, ki, kf, tf, k_comp=None)
     # Test case 1: Test the output type of the function
@@ -56,7 +56,7 @@ def test_plot_protocols_comp():
     dt = 0.01
     tf = 0.100
     tot_steps = int(tf / dt)
-    force = VariableHarmonicForce(kappai=ki, kappaf=kf, tf=tf, steps=4)
+    force = VariableStiffnessHarmonicForce(kappai=ki, kappaf=kf, tf=tf, steps=4)
     sim = Simulator(dt=dt, tot_steps=tot_steps, force=force)
     k_comp = lambda t, tf, ki, kf: ki + (kf - ki) * t / tf
     fig = plot_protocols(sim, ki, kf, tf, k_comp=k_comp)
