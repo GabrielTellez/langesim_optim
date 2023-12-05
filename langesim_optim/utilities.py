@@ -13,10 +13,12 @@ def train_loop(
     epochs,
     sim: Simulator,
     tot_sims,
-    ki,
-    kf,
     optimizer,
     loss_fn,
+    ki=1.0,
+    kf=1.0,
+    ci=0.0,
+    cf=0.0,
     scheduler=None,
     device=device,
     init_epoch=0,
@@ -49,13 +51,22 @@ def train_loop(
         optimizer.zero_grad()
 
         # forward pass
-        x0 = torch.randn(tot_sims, device=device) * ki**-0.5
+        x0 = torch.randn(tot_sims, device=device) * ki**-0.5 + ci
         if sim.compute_work_heat:
             xf, wf, qf = sim(x0)
         else:
             xf = sim(x0)
 
-        loss = loss_fn(xf, kf, ki, sim, device=device, **kwargs)
+        kwargs_base = {
+            "kf": kf,
+            "ki": ki,
+            "ci": ci,
+            "cf": cf,
+            "sim": sim,
+            "device": device,
+        }
+        merged_kwargs = {**kwargs_base, **kwargs}
+        loss = loss_fn(xf=xf, **merged_kwargs)
         lossi.append(loss.item())
 
         # backward pass

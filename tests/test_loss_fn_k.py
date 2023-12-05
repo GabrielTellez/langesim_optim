@@ -21,7 +21,7 @@ def test_loss_fn_k():
 
     # Call the function
     loss_value = loss_fn_k(
-        xf, kf, ki, device=device, scale=scale, kFsteps=kFsteps, x_steps=x_steps
+        xf=xf, kf=kf, ki=ki, device=device, scale=scale, kFsteps=kFsteps, x_steps=x_steps
     )
 
     # Assertions
@@ -36,6 +36,6 @@ def test_loss_fn_gaussian():
     kf = 1.0 / var
     xf = var**0.5 * torch.randn(100_000, device=device)
 
-    loss_value = loss_fn_k(xf, kf)
+    loss_value = loss_fn_k(xf=xf, kf=kf)
 
     assert loss_value.item() < 5e-5

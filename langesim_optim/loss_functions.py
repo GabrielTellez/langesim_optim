@@ -14,7 +14,7 @@ def gaussian(x, var=1.0, center=0.0):
 
 
 def FT_pdf(
-    pdf, kf, scale=5.0, steps=10_000, kFs=None, kFsteps=100, args=(), device=device
+    pdf, kf, scale=5.0, steps=10_000, kFs=None, kFsteps=100, args=(), device=device, **kwargs,
 ):
     """
     Fourier transform (FT) of a probability density function (pdf).
@@ -29,6 +29,7 @@ def FT_pdf(
         kFsteps (optional, int): size for kFS if not provided.
         args (optional, tuple): other arguments taken by pdf.
         device (str): device to run on cpu or cuda.
+        **kwargs: extra keywords arguments ignored.
 
     Returns:
         tuple(torch.tensor, torch.tensor): FT of pdf, kFs
@@ -48,7 +49,7 @@ def FT_pdf(
     return integral, kFs
 
 
-def char_fn(xf, kf, scale=5.0, kFsteps=1000, device=device):
+def char_fn(xf, kf, scale=5.0, kFsteps=1000, device=device, **kwargs):
     """
     Computes the characteristic function from samples xf.
 
@@ -56,6 +57,7 @@ def char_fn(xf, kf, scale=5.0, kFsteps=1000, device=device):
         xf (torch.tensor): samples of positions
         kf (float): inverse variance of x
         scale (float): how many kf's should the values of k spread.
+        **kwargs: extra keywords arguments ignored.
 
     Returns:
         tuple(torch.tensor, torch.tensor): characteristic function, corresponding values of k
@@ -74,17 +76,20 @@ def char_fn(xf, kf, scale=5.0, kFsteps=1000, device=device):
 def loss_fn_k(
     xf,
     kf,
-    ki=1.0,
-    sim: Simulator = None,
+    #ki=1.0,
+    #sim: Simulator = None,
     device=device,
     scale=5.0,
     kFsteps=1000,
     x_steps=10_000,
+    **kwargs,
 ):
     """
     Loss function comparing the L2 mean square loss of the characteristic function of the pdf
     to the target normal distribution with variance 1/kf.
-    ki and sim are not used, but kept optional to have the same API for all loss functions.
+    ki and sim are not used, but kept optional to have the same API for all loss
+    functions.
+    **kwargs are ignored.
     """
 
     char_P_k, kFs = char_fn(xf, kf, scale, kFsteps, device=device)
@@ -103,18 +108,38 @@ def loss_fn_k(
 
 
 def loss_fn_variance(
-    xf: torch.tensor, kf: float, ki: float, sim: Simulator, device=device
+    xf: torch.tensor, 
+    kf: float, 
+    ki: float, sim: 
+    Simulator=None, 
+    device=device, 
+    **kwargs,
 ):
     """
     Loss function comparing square difference of theoretical variance vs computed variance of xf.
+    **kwargs are ignored.
     """
 
     var_theo = 1.0 / kf
     var_exp = xf.var()
     return (var_exp - var_theo) ** 2
 
+def loss_fn_mean(
+    xf: torch.tensor, 
+    cf: float, 
+    ci: float, 
+    device=device, 
+    **kwargs
+):
+    """
+    Loss function comparing square difference of theoretical mean cf vs computed mean of xf.
+    """
 
-def loss_fn_grad_k(ki, kf, sim: Simulator):
+    mean_theo = cf
+    mean_exp = xf.mean()
+    return (mean_exp - mean_theo) ** 2
+
+def loss_fn_grad_k(ki, kf, sim: Simulator, **kwargs):
     """Penalizes large variations of kappa."""
     if sim.force.continuous:
         # Include edge values kappai and kappaf
@@ -140,15 +165,16 @@ def loss_fn_control_k_vars(
     kFsteps=1_000,
     x_steps=1_000,
     blend=1e-3,
+    **kwargs,
 ):
     """Loss function that penalizes strong variations of consecutive values of kappa."""
     loss = (1.0 - blend) * loss_fn_k(
-        xf, kf, ki, sim, device=device, scale=scale, kFsteps=kFsteps, x_steps=x_steps
-    ) + blend * loss_fn_grad_k(ki, kf, sim)
+        xf=xf, kf=kf, ki=ki, sim=sim, device=device, scale=scale, kFsteps=kFsteps, x_steps=x_steps
+    ) + blend * loss_fn_grad_k(ki=ki, kf=kf, sim=sim)
     return loss
 
 
-def loss_fn_work(xf, kf, ki, sim: Simulator, device=device):
+def loss_fn_work(xf, kf, ki, sim: Simulator, device=device, **kwargs):
     """
     Loss function to minimize work with respect to lower bound Delta F.
     Note: xf is not used but needed to keep the same API for train loop.
@@ -167,9 +193,10 @@ def loss_fn_eq_work(
     kFsteps=1_000,
     x_steps=1_000,
     blend=1e-3,
+    **kwargs,
 ):
     """Loss function to minimize work and distance to equilibrium"""
     loss = (1.0 - blend) * loss_fn_k(
-        xf, kf, ki, sim, device=device, scale=scale, kFsteps=kFsteps, x_steps=x_steps
-    ) + blend * loss_fn_work(xf, ki, kf, sim)
+        xf=xf, kf=kf, ki=ki, sim=sim, device=device, scale=scale, kFsteps=kFsteps, x_steps=x_steps
+    ) + blend * loss_fn_work(xf=xf, ki=ki, kf=kf, sim=sim)
     return loss
