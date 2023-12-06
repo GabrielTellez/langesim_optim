@@ -7,7 +7,7 @@ def test_loss_fn_mean():
     xf = 10.0 * torch.randn(100_000) + cf
     ci = 1.0
     sim = None
-    loss = loss_fn_mean(xf=xf, cf=cf, ci=ci, device=device)
+    loss = loss_fn_mean(xf=xf, cf=cf)
     # Test case 1: Test the output shape of the function
     assert loss.shape == ()
     # Test case 2: Test the output value of the function

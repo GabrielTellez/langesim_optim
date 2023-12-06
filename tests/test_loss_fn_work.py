@@ -4,13 +4,11 @@ from langesim_optim import loss_fn_work, Simulator, device, loss_fn_eq_work, los
 
 def test_loss_fn_work():
     # Test case 1: Test the output shape of the function
-    xf = torch.tensor([1.0])
-    kf = 1.0
-    ki = 1.0
+
     sim = Simulator()
     sim.w = torch.tensor([1.0] * 10)
 
-    loss = loss_fn_work(xf, kf, ki, sim, device=device)
+    loss = loss_fn_work(sim=sim)
     assert loss.shape == ()
 
     # Test case 2: Test the output value of the function
@@ -25,13 +23,13 @@ def test_loss_fn_eq_work():
     sim = Simulator()
     sim.w = torch.tensor([1.0] * 10)
     blend = 1e-1
-    loss = loss_fn_eq_work(xf, kf, ki, sim, blend=blend)
+    loss = loss_fn_eq_work(xf=xf, kf=kf, sim=sim, blend=blend)
     # Test case 1: Test the output shape of the function
     assert loss.shape == ()
 
     # Test case 2: Test the output value of the function
 
-    loss = loss_fn_eq_work(xf, kf, ki, sim, blend=blend)
-    loss_fn_k_value = loss_fn_k(xf, kf)
+    loss = loss_fn_eq_work(xf=xf, kf=kf, sim=sim, blend=blend)
+    loss_fn_k_value = loss_fn_k(xf=xf, kf=kf)
     assert loss_fn_k_value.item() < 5e-5
     assert torch.allclose(loss, torch.tensor(1e-1), rtol=1e-02, atol=1e-02)

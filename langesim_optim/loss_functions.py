@@ -76,8 +76,6 @@ def char_fn(xf, kf, scale=5.0, kFsteps=1000, device=device, **kwargs):
 def loss_fn_k(
     xf,
     kf,
-    #ki=1.0,
-    #sim: Simulator = None,
     device=device,
     scale=5.0,
     kFsteps=1000,
@@ -87,12 +85,22 @@ def loss_fn_k(
     """
     Loss function comparing the L2 mean square loss of the characteristic function of the pdf
     to the target normal distribution with variance 1/kf.
-    ki and sim are not used, but kept optional to have the same API for all loss
-    functions.
-    **kwargs are ignored.
+    Any additional keyword arguments are ignored.
+
+    Args:
+        xf (torch.Tensor): The final position of the particles.
+        kf (float): The final stiffness value.
+        device (torch.device, optional): The device on which to perform the computations. Defaults to the current device.
+        scale (float, optional): how many kf's should the values of k spread. Defaults to 5.0.
+        x_steps (float): steps of the x discretization.
+        kFs (torch.tensor): range for the k values.
+        kFsteps (optional, int): size for kFS if not provided.
+        **kwargs: extra keywords arguments ignored.
+    Returns:
+        float: The MSE loss between the computed characteristic function and the target characteristic function.
     """
 
-    char_P_k, kFs = char_fn(xf, kf, scale, kFsteps, device=device)
+    char_P_k, kFs = char_fn(xf=xf, kf=kf, scale=scale, kFsteps=kFsteps, device=device)
     char_P_k_teo, _ = FT_pdf(
         pdf=gaussian,
         kf=kf,
@@ -110,14 +118,19 @@ def loss_fn_k(
 def loss_fn_variance(
     xf: torch.tensor, 
     kf: float, 
-    ki: float, sim: 
-    Simulator=None, 
-    device=device, 
     **kwargs,
 ):
     """
-    Loss function comparing square difference of theoretical variance vs computed variance of xf.
-    **kwargs are ignored.
+    Loss function comparing square difference of theoretical variance 1/kf vs computed variance of xf.
+
+    Args:
+        xf (torch.Tensor): The final position of the particles.
+        kf (float): The final stiffness value.
+        **kwargs: extra keywords arguments ignored.
+
+    Returns:
+        float: The squared difference between the computed variance and the theoretical variance.
+  
     """
 
     var_theo = 1.0 / kf
@@ -127,12 +140,18 @@ def loss_fn_variance(
 def loss_fn_mean(
     xf: torch.tensor, 
     cf: float, 
-    ci: float, 
-    device=device, 
     **kwargs
 ):
     """
     Loss function comparing square difference of theoretical mean cf vs computed mean of xf.
+    
+    Args:
+        xf (torch.Tensor): The final position of the particles.
+        cf (float): The theoretical mean value.
+        **kwargs: extra keywords arguments ignored.
+
+    Returns:
+        float: The squared difference between the computed mean and the theoretical mean.
     """
 
     mean_theo = cf
@@ -140,7 +159,20 @@ def loss_fn_mean(
     return (mean_exp - mean_theo) ** 2
 
 def loss_fn_grad_k(ki, kf, sim: Simulator, **kwargs):
-    """Penalizes large variations of kappa."""
+    """
+    Penalizes large variations of kappa (the stiffness of the harmonic potential).
+    If the force is continuous, the function includes the edge values `ki` and `kf` in the computation.
+    The function computes the difference between consecutive elements of `ks` (which represents kappa values), 
+    squares these differences, and then returns the mean of these squared differences.
+
+    Args:
+        ki (float): The initial stiffness value.
+        kf (float): The final stiffness value.
+        sim (Simulator): The simulator object.
+        **kwargs: extra keywords arguments ignored.
+    Returns:
+        float: The mean of the squared differences between consecutive kappa values.
+"""
     if sim.force.continuous:
         # Include edge values kappai and kappaf
         ks = torch.cat(
@@ -167,17 +199,47 @@ def loss_fn_control_k_vars(
     blend=1e-3,
     **kwargs,
 ):
-    """Loss function that penalizes strong variations of consecutive values of kappa."""
+    """Loss function that minimizes distance to equilibrium and penalizes strong variations of consecutive values of
+    kappa. This function computes a weighted sum of two loss functions: `loss_fn_k` and `loss_fn_grad_k`. 
+    The weight of each loss function is determined by the `blend` parameter.
+
+    Args:
+        xf (torch.Tensor): The final position of the particles.
+        kf (float): The final stiffness value.
+        ki (float): The initial stiffness value.
+        sim (Simulator): The simulator object.
+        device (torch.device, optional): The device on which to perform the computations. Defaults to the current device.
+        scale (float, optional): how many kf's should the values of k spread. Defaults to 5.0.
+        x_steps (float): steps of the x discretization.
+        kFs (torch.tensor): range for the k values.
+        kFsteps (optional, int): size for kFS if not provided.
+        blend (float, optional): The blending factor for the two loss functions. Defaults to 1e-3.
+        **kwargs: extra keywords arguments ignored.
+
+    Returns:
+        float: The weighted sum of the two loss functions.
+   
+    """
     loss = (1.0 - blend) * loss_fn_k(
-        xf=xf, kf=kf, ki=ki, sim=sim, device=device, scale=scale, kFsteps=kFsteps, x_steps=x_steps
+        xf=xf, kf=kf, ki=ki, device=device, scale=scale, kFsteps=kFsteps, x_steps=x_steps
     ) + blend * loss_fn_grad_k(ki=ki, kf=kf, sim=sim)
     return loss
 
 
-def loss_fn_work(xf, kf, ki, sim: Simulator, device=device, **kwargs):
+def loss_fn_work(sim: Simulator, **kwargs):
     """
     Loss function to minimize work with respect to lower bound Delta F.
-    Note: xf is not used but needed to keep the same API for train loop.
+
+    This function returns the mean work done during the simulation, which is stored in `sim.w`. 
+    The goal is to minimize this work with respect to a lower bound Delta F.
+
+    Args:
+        sim (Simulator): The simulator object, which contains the work done during the simulation.
+        **kwargs: extra keywords arguments ignored.
+
+    Returns:
+        float: The mean work done during the simulation.
+
     """
     # DeltaF = 0.5*torch.log(torch.tensor(kf * ki**-1, device=device))
     return sim.w.mean()  # - DeltaF # No se necesita DeltaF porque es constante
@@ -186,7 +248,6 @@ def loss_fn_work(xf, kf, ki, sim: Simulator, device=device, **kwargs):
 def loss_fn_eq_work(
     xf,
     kf,
-    ki,
     sim: Simulator,
     device=device,
     scale=5.0,
@@ -195,8 +256,28 @@ def loss_fn_eq_work(
     blend=1e-3,
     **kwargs,
 ):
-    """Loss function to minimize work and distance to equilibrium"""
+    """Loss function to minimize work and distance to equilibrium.
+    This function computes a weighted sum of two loss functions: `loss_fn_k` and `loss_fn_work`. 
+    The weight of each loss function is determined by the `blend` parameter.
+
+    Args:
+        xf (torch.Tensor): The final position of the particles.
+        kf (float): The final stiffness value.
+        sim (Simulator): The simulator object.
+        device (torch.device, optional): The device on which to perform the computations. Defaults to the current device.
+        scale (float, optional): how many kf's should the values of k spread. Defaults to 5.0.
+        x_steps (float): steps of the x discretization.
+        kFs (torch.tensor): range for the k values.
+        kFsteps (optional, int): size for kFS if not provided.
+        blend (float, optional): The blending factor for the two loss functions. Defaults to 1e-3.
+        **kwargs: extra keywords arguments ignored.
+
+    Returns:
+        float: The weighted sum of the two loss functions: work and
+        caracteristic function comparison to the equilibrium one.
+ 
+"""
     loss = (1.0 - blend) * loss_fn_k(
-        xf=xf, kf=kf, ki=ki, sim=sim, device=device, scale=scale, kFsteps=kFsteps, x_steps=x_steps
-    ) + blend * loss_fn_work(xf=xf, ki=ki, kf=kf, sim=sim)
+        xf=xf, kf=kf, device=device, scale=scale, kFsteps=kFsteps, x_steps=x_steps
+    ) + blend * loss_fn_work(sim=sim)
     return loss
