@@ -14,20 +14,20 @@ def gaussian(x, var=1.0, center=0.0):
 
 
 def FT_pdf(
-    pdf, kf, scale=5.0, steps=10_000, kFs=None, kFsteps=100, args=(), device=device, **kwargs,
+    pdf, kf, center=0.0, scale=5.0, steps=10_000, kFs=None, kFsteps=100, args={}, device=device, **kwargs,
 ):
     """
     Fourier transform (FT) of a probability density function (pdf).
-    Assumes that the pdf is centered at 0.0.
 
     Args:
         pdf (callable): the pdf whose Fourier transform is to be computed.
-        kf (float): inverse of the variance of the pdf
+        kf (float): inverse of the variance of the pdf.
+        center (float): mean of the pdf.
         scale (float): how many kf's should we use to compute the FT.
         steps (float): steps of the x discretization.
         kFs (torch.tensor): range for the k values.
         kFsteps (optional, int): size for kFS if not provided.
-        args (optional, tuple): other arguments taken by pdf.
+        args (optional, dict): other keyword arguments taken by pdf.
         device (str): device to run on cpu or cuda.
         **kwargs: extra keywords arguments ignored.
 
@@ -42,9 +42,9 @@ def FT_pdf(
         kFs = torch.arange(start=kFinit, end=kFend, step=dkF, device=device)
     xmax = scale * kf**-0.5
     dx = 2.0 * xmax / steps
-    xs = torch.arange(start=-xmax, end=xmax, step=dx, device=device)
+    xs = torch.arange(start=-xmax+center, end=xmax+center, step=dx, device=device)
     kx = kFs.unsqueeze(dim=1) @ xs.unsqueeze(dim=0)
-    integrand = pdf(xs, *args) * (1.0j * kx).exp()
+    integrand = pdf(x=xs, **args) * (1.0j * kx).exp()
     integral = torch.trapezoid(integrand, dx=dx, dim=1)
     return integral, kFs
 
@@ -76,6 +76,7 @@ def char_fn(xf, kf, scale=5.0, kFsteps=1000, device=device, **kwargs):
 def loss_fn_k(
     xf,
     kf,
+    cf=0.0,
     device=device,
     scale=5.0,
     kFsteps=1000,
@@ -84,12 +85,13 @@ def loss_fn_k(
 ):
     """
     Loss function comparing the L2 mean square loss of the characteristic function of the pdf
-    to the target normal distribution with variance 1/kf.
+    to the target normal distribution with variance 1/kf and center cf.
     Any additional keyword arguments are ignored.
 
     Args:
         xf (torch.Tensor): The final position of the particles.
         kf (float): The final stiffness value.
+        cf (float, optional): The final center value. Defaults to 0.0.
         device (torch.device, optional): The device on which to perform the computations. Defaults to the current device.
         scale (float, optional): how many kf's should the values of k spread. Defaults to 5.0.
         x_steps (float): steps of the x discretization.
@@ -107,11 +109,10 @@ def loss_fn_k(
         scale=scale,
         steps=x_steps,
         kFs=kFs,
-        args=(1.0 / kf,),
+        args={"var": 1.0 / kf, "center": cf},
         device=device,
     )
 
-    # return torch.abs((char_P_k - char_P_k_teo)**2).mean(), char_P_k, char_P_k_teo, kFs
     return torch.abs((char_P_k - char_P_k_teo) ** 2).mean()
 
 

@@ -35,19 +35,20 @@ def test_FT_pdf_with_custom_pdf():
     # Test case for FT_pdf with a custom PDF function
 
     # Define custom PDF function for testing purposes
-    def custom_pdf(x, a, b):
+    def custom_pdf(x, a=1.0, b=1.0):
         return a * torch.exp(-b * x**2)
 
     # Define parameters for testing
     kf = torch.tensor(1.0)
     scale = 5.0
     steps = 1000
-    a = torch.tensor(2.0)
-    b = torch.tensor(3.0)
+    a = 2.0
+    b = 3.0
+    args = {"a": a, "b": b}
 
     # Call FT_pdf function with the custom PDF function and additional arguments
     result, kFs = FT_pdf(
-        custom_pdf, kf, scale=scale, steps=steps, args=(a, b), device=device
+        custom_pdf, kf, scale=scale, steps=steps, args=args, device=device
     )
 
     # Check if the result and kFs have the correct shapes
