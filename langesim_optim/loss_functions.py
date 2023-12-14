@@ -56,6 +56,7 @@ def char_fn(xf, kf, scale=5.0, kFsteps=1000, device=device, **kwargs):
     Args:
         xf (torch.tensor): samples of positions
         kf (float): inverse variance of x
+        kFsteps (int): number of k's to compute the characteristic function
         scale (float): how many kf's should the values of k spread.
         **kwargs: extra keywords arguments ignored.
 
@@ -106,6 +107,7 @@ def loss_fn_k(
     char_P_k_teo, _ = FT_pdf(
         pdf=gaussian,
         kf=kf,
+        center=cf,
         scale=scale,
         steps=x_steps,
         kFs=kFs,

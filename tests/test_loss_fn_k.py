@@ -5,7 +5,7 @@ from langesim_optim import (
     device,
     char_fn,
     FT_pdf,
-)  # Import necessary functions and classes from your module
+)  
 
 
 # Define test cases for the loss_fn_k function
@@ -37,5 +37,17 @@ def test_loss_fn_gaussian():
     xf = var**0.5 * torch.randn(100_000, device=device)
 
     loss_value = loss_fn_k(xf=xf, kf=kf)
+
+    assert loss_value.item() < 5e-5
+
+def test_loss_fn_gaussian_noncentered():
+    """Test characteristic function of a normal distribution with non zero
+    center is a gaussian using the loss function loss_fn_k"""
+    var = 2.0
+    kf = 1.0 / var
+    cf = 12.0
+    xf = var**0.5 * torch.randn(100_000, device=device) + cf
+
+    loss_value = loss_fn_k(xf=xf, kf=kf, cf=cf)
 
     assert loss_value.item() < 5e-5
