@@ -27,7 +27,9 @@ def test_center_interpolation_2points():
     centerf = 4.0
     tf = 1.0
     cl = [2.0, 4.0]
-    force = VariableCenterHarmonicForce(centeri, centerf, tf, center_list=cl, continuous=True)
+    force = VariableCenterHarmonicForce(
+        centeri, centerf, tf, center_list=cl, continuous=True
+    )
     t = torch.tensor(0.5)
     expected_result = 3.0
     assert force.center(t) == expected_result
@@ -45,7 +47,9 @@ def test_center_1points():
     middle = 6.0
     tf = 1.0
     cl = [6.0]
-    force = VariableCenterHarmonicForce(centeri, centerf, tf, center_list=cl, continuous=True)
+    force = VariableCenterHarmonicForce(
+        centeri, centerf, tf, center_list=cl, continuous=True
+    )
     t = torch.tensor(0.0)
     expected_result = centeri
     assert force.center(t) == expected_result
@@ -65,7 +69,9 @@ def test_center_TSP():
     centerf = 5.0
     tf = 1.0
     cl = [10.0]
-    force = VariableCenterHarmonicForce(centeri, centerf, tf, center_list=cl, continuous=False)
+    force = VariableCenterHarmonicForce(
+        centeri, centerf, tf, center_list=cl, continuous=False
+    )
     t = torch.tensor(0.0)
     expected_result = centeri
     assert force.center(t) == expected_result

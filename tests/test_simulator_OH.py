@@ -21,7 +21,9 @@ def test_jump_k(ki, ko):
 
     tf = dt * tot_steps
 
-    force = VariableStiffnessHarmonicForce(kappai=ki, kappaf=ko, tf=tf, k=[ko], continuous=False)
+    force = VariableStiffnessHarmonicForce(
+        kappai=ki, kappaf=ko, tf=tf, k=[ko], continuous=False
+    )
     sim = Simulator(dt=dt, tot_steps=tot_steps, force=force)
 
     x0 = torch.randn(tot_sims, device=device) * ki**-0.5

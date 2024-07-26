@@ -18,11 +18,13 @@ def test_jump_center(ci, co):
 
     def theo_pos(t):
         """Theoretical average position"""
-        return (ci - co) * np.exp(- ki * t) + co
+        return (ci - co) * np.exp(-ki * t) + co
 
     tf = dt * tot_steps
 
-    force = VariableCenterHarmonicForce(centeri=ci, centerf=co, tf=tf, center_list=[co], kappa0=ki, continuous=False)
+    force = VariableCenterHarmonicForce(
+        centeri=ci, centerf=co, tf=tf, center_list=[co], kappa0=ki, continuous=False
+    )
     sim = Simulator(dt=dt, tot_steps=tot_steps, force=force)
 
     x0 = torch.randn(tot_sims, device=device) * ki**-0.5 + ci
@@ -30,7 +32,6 @@ def test_jump_center(ci, co):
     posteo = theo_pos(tf)
     posnum = xf.mean().item()
     varnum = xf.var().item()
-    varteo = 1/ki
+    varteo = 1 / ki
     assert posteo == pytest.approx(posnum, rel=5e-2), f"{posteo=} != {posnum=}"
     assert varteo == pytest.approx(varnum, rel=5e-2), f"{varteo=} != {varnum=}"
-

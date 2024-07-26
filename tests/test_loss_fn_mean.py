@@ -12,4 +12,3 @@ def test_loss_fn_mean():
     assert loss.shape == ()
     # Test case 2: Test the output value of the function
     assert torch.allclose(loss, torch.tensor(0.0), rtol=1e-05, atol=5e-03)
-

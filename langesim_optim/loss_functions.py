@@ -14,7 +14,16 @@ def gaussian(x, var=1.0, center=0.0):
 
 
 def FT_pdf(
-    pdf, kf, center=0.0, scale=5.0, steps=10_000, kFs=None, kFsteps=100, args={}, device=device, **kwargs,
+    pdf,
+    kf,
+    center=0.0,
+    scale=5.0,
+    steps=10_000,
+    kFs=None,
+    kFsteps=100,
+    args={},
+    device=device,
+    **kwargs,
 ):
     """
     Fourier transform (FT) of a probability density function (pdf).
@@ -42,7 +51,7 @@ def FT_pdf(
         kFs = torch.arange(start=kFinit, end=kFend, step=dkF, device=device)
     xmax = scale * kf**-0.5
     dx = 2.0 * xmax / steps
-    xs = torch.arange(start=-xmax+center, end=xmax+center, step=dx, device=device)
+    xs = torch.arange(start=-xmax + center, end=xmax + center, step=dx, device=device)
     kx = kFs.unsqueeze(dim=1) @ xs.unsqueeze(dim=0)
     integrand = pdf(x=xs, **args) * (1.0j * kx).exp()
     integral = torch.trapezoid(integrand, dx=dx, dim=1)
@@ -119,8 +128,8 @@ def loss_fn_k(
 
 
 def loss_fn_variance(
-    xf: torch.tensor, 
-    kf: float, 
+    xf: torch.tensor,
+    kf: float,
     **kwargs,
 ):
     """
@@ -133,21 +142,18 @@ def loss_fn_variance(
 
     Returns:
         float: The squared difference between the computed variance and the theoretical variance.
-  
+
     """
 
     var_theo = 1.0 / kf
     var_exp = xf.var()
     return (var_exp - var_theo) ** 2
 
-def loss_fn_mean(
-    xf: torch.tensor, 
-    cf: float, 
-    **kwargs
-):
+
+def loss_fn_mean(xf: torch.tensor, cf: float, **kwargs):
     """
     Loss function comparing square difference of theoretical mean cf vs computed mean of xf.
-    
+
     Args:
         xf (torch.Tensor): The final position of the particles.
         cf (float): The theoretical mean value.
@@ -161,11 +167,12 @@ def loss_fn_mean(
     mean_exp = xf.mean()
     return (mean_exp - mean_theo) ** 2
 
+
 def loss_fn_grad_k(ki, kf, sim: Simulator, **kwargs):
     """
     Penalizes large variations of kappa (the stiffness of the harmonic potential).
     If the force is continuous, the function includes the edge values `ki` and `kf` in the computation.
-    The function computes the difference between consecutive elements of `ks` (which represents kappa values), 
+    The function computes the difference between consecutive elements of `ks` (which represents kappa values),
     squares these differences, and then returns the mean of these squared differences.
 
     Args:
@@ -174,8 +181,7 @@ def loss_fn_grad_k(ki, kf, sim: Simulator, **kwargs):
         sim (Simulator): The simulator object.
         **kwargs: extra keywords arguments ignored.
     Returns:
-        float: The mean of the squared differences between consecutive kappa values.
-"""
+        float: The mean of the squared differences between consecutive kappa values."""
     if sim.force.continuous:
         # Include edge values kappai and kappaf
         ks = torch.cat(
@@ -203,7 +209,7 @@ def loss_fn_control_k_vars(
     **kwargs,
 ):
     """Loss function that minimizes distance to equilibrium and penalizes strong variations of consecutive values of
-    kappa. This function computes a weighted sum of two loss functions: `loss_fn_k` and `loss_fn_grad_k`. 
+    kappa. This function computes a weighted sum of two loss functions: `loss_fn_k` and `loss_fn_grad_k`.
     The weight of each loss function is determined by the `blend` parameter.
 
     Args:
@@ -221,10 +227,16 @@ def loss_fn_control_k_vars(
 
     Returns:
         float: The weighted sum of the two loss functions.
-   
+
     """
     loss = (1.0 - blend) * loss_fn_k(
-        xf=xf, kf=kf, ki=ki, device=device, scale=scale, kFsteps=kFsteps, x_steps=x_steps
+        xf=xf,
+        kf=kf,
+        ki=ki,
+        device=device,
+        scale=scale,
+        kFsteps=kFsteps,
+        x_steps=x_steps,
     ) + blend * loss_fn_grad_k(ki=ki, kf=kf, sim=sim)
     return loss
 
@@ -233,7 +245,7 @@ def loss_fn_work(sim: Simulator, **kwargs):
     """
     Loss function to minimize work with respect to lower bound Delta F.
 
-    This function returns the mean work done during the simulation, which is stored in `sim.w`. 
+    This function returns the mean work done during the simulation, which is stored in `sim.w`.
     The goal is to minimize this work with respect to a lower bound Delta F.
 
     Args:
@@ -260,7 +272,7 @@ def loss_fn_eq_work(
     **kwargs,
 ):
     """Loss function to minimize work and distance to equilibrium.
-    This function computes a weighted sum of two loss functions: `loss_fn_k` and `loss_fn_work`. 
+    This function computes a weighted sum of two loss functions: `loss_fn_k` and `loss_fn_work`.
     The weight of each loss function is determined by the `blend` parameter.
 
     Args:
@@ -278,8 +290,7 @@ def loss_fn_eq_work(
     Returns:
         float: The weighted sum of the two loss functions: work and
         caracteristic function comparison to the equilibrium one.
- 
-"""
+    """
     loss = (1.0 - blend) * loss_fn_k(
         xf=xf, kf=kf, device=device, scale=scale, kFsteps=kFsteps, x_steps=x_steps
     ) + blend * loss_fn_work(sim=sim)

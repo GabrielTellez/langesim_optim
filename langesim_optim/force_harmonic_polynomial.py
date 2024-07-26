@@ -1,6 +1,7 @@
 import torch
 from .simulator_forces import BaseHarmonicForce, device
 
+
 class VariableStiffnessHarmonicForcePolynomial(BaseHarmonicForce):
     """
     Harmonic oscillator force with a variable stiffness that is a learnable parameter.
@@ -15,13 +16,19 @@ class VariableStiffnessHarmonicForcePolynomial(BaseHarmonicForce):
         tf: float,
         coef_list: list,
         continuous: bool = False,
-        ):
+        normalized: bool = False,
+    ):
         """
         Args:
             kappai (float): Initial stiffness.
             kappaf (float): Final stiffness.
             tf (float): final time of the protocol.
-            coef_list (list): List of coefficients for the polynomial function of time.
+            coef_list (list): List of coefficients for the polynomial function
+            of time.
+            continuous (bool): If True, the stiffness is a continuous function
+            of time at t=0 and t=tf.
+            normalized (bool): If True, the argument is normalized to be t/tf
+            instead of t.
         """
         super().__init__()
         self.register_buffer("kappai", torch.tensor(kappai, dtype=torch.float))
@@ -30,9 +37,12 @@ class VariableStiffnessHarmonicForcePolynomial(BaseHarmonicForce):
         powers = torch.arange(len(coef_list), dtype=torch.float)
         self.register_buffer("powers", powers)
         self.continuous = continuous
-       
+        self.normalized = normalized
+
         coef_list = torch.tensor(coef_list, dtype=torch.float)
-        self.coef_list = torch.nn.parameter.Parameter(data=coef_list, requires_grad=True)
+        self.coef_list = torch.nn.parameter.Parameter(
+            data=coef_list, requires_grad=True
+        )
 
     def kappa(self, t):
         """
@@ -40,8 +50,10 @@ class VariableStiffnessHarmonicForcePolynomial(BaseHarmonicForce):
         If continuous = False:
             kappa(t) = sum coef_list[i] * t^i
         If continuous = True:
-            kappa(t) = kapppai + (t/tf) * (kappaf - kappai) 
-                        + (t/tf)*(1-t/tf)* sum coef_list[i] * t^i 
+            kappa(t) = kapppai + (t/tf) * (kappaf - kappai)
+                        + (t/tf)*(1-t/tf)* sum coef_list[i] * t^i
+        If normalized: 
+            use t/tf instead of t in the polynomial.
 
         Args:
             t: time to compute the stiffness
@@ -52,9 +64,15 @@ class VariableStiffnessHarmonicForcePolynomial(BaseHarmonicForce):
             return self.kappai
         if t > self.tf:
             return self.kappaf
-        sum = torch.sum(self.coef_list * t ** self.powers)
+        s = t
+        if self.normalized:
+            s = t / self.tf
+        sum = torch.sum(self.coef_list * s**self.powers)
         if self.continuous:
-            return self.kappai + (t/self.tf) * (self.kappaf - self.kappai) + (t/self.tf)*(1-t/self.tf)*sum
+            return (
+                self.kappai
+                + (t / self.tf) * (self.kappaf - self.kappai)
+                + (t / self.tf) * (1 - t / self.tf) * sum
+            )
         else:
             return sum
-        

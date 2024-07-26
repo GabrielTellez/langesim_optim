@@ -4,4 +4,3 @@ from .utilities import *
 from .loss_functions import *
 from .interpolator import *
 from .force_harmonic_polynomial import *
-

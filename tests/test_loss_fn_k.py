@@ -5,7 +5,7 @@ from langesim_optim import (
     device,
     char_fn,
     FT_pdf,
-)  
+)
 
 
 # Define test cases for the loss_fn_k function
@@ -21,7 +21,13 @@ def test_loss_fn_k():
 
     # Call the function
     loss_value = loss_fn_k(
-        xf=xf, kf=kf, ki=ki, device=device, scale=scale, kFsteps=kFsteps, x_steps=x_steps
+        xf=xf,
+        kf=kf,
+        ki=ki,
+        device=device,
+        scale=scale,
+        kFsteps=kFsteps,
+        x_steps=x_steps,
     )
 
     # Assertions
@@ -39,6 +45,7 @@ def test_loss_fn_gaussian():
     loss_value = loss_fn_k(xf=xf, kf=kf)
 
     assert loss_value.item() < 5e-5
+
 
 def test_loss_fn_gaussian_noncentered():
     """Test characteristic function of a normal distribution with non zero

@@ -1,4 +1,3 @@
-
 import torch
 from langesim_optim import (
     train_loop,
@@ -69,7 +68,9 @@ def test_train_loop_TSP():
     tot_sims = 100_000
 
     lr = 100.0
-    force = VariableStiffnessHarmonicForce(kappai=ki, kappaf=kf, tf=tf, k=[kf], continuous=False)
+    force = VariableStiffnessHarmonicForce(
+        kappai=ki, kappaf=kf, tf=tf, k=[kf], continuous=False
+    )
     sim = Simulator(force=force, dt=dt, tot_steps=tot_steps, device=device)
 
     optimizer = torch.optim.SGD(params=sim.parameters(), lr=lr)
@@ -94,13 +95,13 @@ def test_train_loop_TSP():
 
 
 def test_train_loop_TSP_center_loss_fn_mean():
-    """Test a train loop on the two-step protocol (TSP) for variable center: 
+    """Test a train loop on the two-step protocol (TSP) for variable center:
     only one value of center is learned.
     Test using loss_fn_mean"""
 
     def center_theo(t, ci, cf, k):
         """Theoretical center"""
-        return ( cf - ci*np.exp(-k*t) )/( 1 - np.exp(-k*t) )
+        return (cf - ci * np.exp(-k * t)) / (1 - np.exp(-k * t))
 
     epochs = 50
     ci = 1.0
@@ -112,7 +113,9 @@ def test_train_loop_TSP_center_loss_fn_mean():
     tot_sims = 100_000
 
     lr = 10.0
-    force = VariableCenterHarmonicForce(centeri=ci, centerf=cf, tf=tf, center_list=[cf], kappa0=ki, continuous=False)
+    force = VariableCenterHarmonicForce(
+        centeri=ci, centerf=cf, tf=tf, center_list=[cf], kappa0=ki, continuous=False
+    )
     sim = Simulator(dt=dt, tot_steps=tot_steps, force=force, device=device)
 
     optimizer = torch.optim.SGD(params=sim.parameters(), lr=lr)
@@ -130,26 +133,27 @@ def test_train_loop_TSP_center_loss_fn_mean():
         cf=cf,
     )
 
-
     loss_mean = np.mean(lossi[-5:])
     assert loss_mean <= 1e-4, f"{loss_mean=} > 1e-4"
     c_theo_val = center_theo(tf, ci, cf, ki)
     c_learned = sim.force.center_list[0].item()
-    assert np.isclose(c_learned, c_theo_val, rtol=1e-2), f"{c_learned=} != {c_theo_val=}"
+    assert np.isclose(
+        c_learned, c_theo_val, rtol=1e-2
+    ), f"{c_learned=} != {c_theo_val=}"
 
 
 def test_train_loop_TSP_center_loss_fn_k():
-    """Test a train loop on the two-step protocol (TSP) for variable center: 
+    """Test a train loop on the two-step protocol (TSP) for variable center:
     only one value of center is learned.
     Test using loss_fn_k"""
 
     def center_theo(t, ci, cf, k):
         """Theoretical center"""
-        return ( cf - ci*np.exp(-k*t) )/( 1 - np.exp(-k*t) )
+        return (cf - ci * np.exp(-k * t)) / (1 - np.exp(-k * t))
 
     epochs = 50
     ci = 1.0
-    cf = 3.0 # does not converge well for large cf (ex. cf=8.0) without adjusting scale, kFs, x_steps
+    cf = 3.0  # does not converge well for large cf (ex. cf=8.0) without adjusting scale, kFs, x_steps
     dt = 0.001
     tf = 0.100
     ki = 1.0
@@ -157,7 +161,9 @@ def test_train_loop_TSP_center_loss_fn_k():
     tot_sims = 100_000
 
     lr = 100.0
-    force = VariableCenterHarmonicForce(centeri=ci, centerf=cf, tf=tf, center_list=[cf], kappa0=ki, continuous=False)
+    force = VariableCenterHarmonicForce(
+        centeri=ci, centerf=cf, tf=tf, center_list=[cf], kappa0=ki, continuous=False
+    )
     sim = Simulator(dt=dt, tot_steps=tot_steps, force=force, device=device)
 
     optimizer = torch.optim.SGD(params=sim.parameters(), lr=lr)
@@ -175,10 +181,10 @@ def test_train_loop_TSP_center_loss_fn_k():
         cf=cf,
     )
 
-
     loss_mean = np.mean(lossi[-5:])
     assert loss_mean <= 1e-4, f"{loss_mean=} > 1e-4"
     c_theo_val = center_theo(tf, ci, cf, ki)
     c_learned = sim.force.center_list[0].item()
-    assert np.isclose(c_learned, c_theo_val, rtol=1e-2), f"{c_learned=} != {c_theo_val=}"
-
+    assert np.isclose(
+        c_learned, c_theo_val, rtol=1e-2
+    ), f"{c_learned=} != {c_theo_val=}"
