@@ -376,3 +376,80 @@ class VariableCenterHarmonicForce(BaseHarmonicForce):
             t: time to compute the stiffness
         """
         return self.kappa0
+
+class VariableStiffnessCenterHarmonicForce(VariableStiffnessHarmonicForce, VariableCenterHarmonicForce):
+    """
+    Harmonic oscillator force with a variable stiffness and center that are learnable parameters.
+    """
+
+    def __init__(
+        self,
+        kappai: float,
+        kappaf: float,
+        centeri: float,
+        centerf: float,
+        tf: float,
+        steps: Optional[int] = None,
+        k: Optional[List] = None,
+        center_list: Optional[List] = None,
+        continuous=True
+    ):
+        """
+        Initializes the force with a stiffness and center that are defined at `steps` values
+        of time and linearly interpolated between.
+
+        Args:
+            kappai (float): initial stiffness
+            kappaf (float): final stiffness
+            centeri (float): initial center
+            centerf (float): final center
+            tf (float): final time of the protocol
+            steps (int, optional): number time steps where the stiffness value is given
+            k (list, optional): the initial stiffness given by a list of `steps` values
+            center_list (list, optional): the initial center given by a list of `steps` values
+            countinuous (bool): whether the stiffness and center are continuous at initial and final times,
+            thus equal to kappai, kappaf, centeri and centerf.
+        """
+        BaseForce.__init__(self)
+
+        self.continuous = continuous
+
+        self.register_buffer("kappai", torch.tensor(kappai, dtype=torch.float))
+        self.register_buffer("kappaf", torch.tensor(kappaf, dtype=torch.float))
+        self.register_buffer("tf", torch.tensor(tf, dtype=torch.float))
+        k_ini = validate_init_interpolation_list(
+            kappai, kappaf, k, steps, ylist_name="stiffness"
+        )
+        self.k = nn.parameter.Parameter(data=k_ini, requires_grad=True)
+
+        self.register_buffer("centeri", torch.tensor(centeri, dtype=torch.float))
+        self.register_buffer("centerf", torch.tensor(centerf, dtype=torch.float))
+        self.register_buffer("tf", torch.tensor(tf, dtype=torch.float))
+        center_ini = validate_init_interpolation_list(
+            centeri, centerf, center_list, steps, ylist_name="center"
+        )
+        self.center_list = nn.parameter.Parameter(data=center_ini, requires_grad=True)
+
+        def center(self, t):
+            """
+            Center given as an interpolation between the values given by the list center.
+
+            Args:
+                t: time to compute the center
+
+            Returns:
+                torch.tensor: the center value at time t
+            """
+            return VariableCenterHarmonicForce.center(self, t)
+
+        def kappa(self, t):
+            """
+            Stiffness given as an interpolation between the values given by the list k.
+
+            Args:
+                t: time to compute the stiffness
+
+            Returns:
+                torch.tensor: the stiffness value at time t
+            """
+            return VariableStiffnessHarmonicForce.kappa(self, t)
