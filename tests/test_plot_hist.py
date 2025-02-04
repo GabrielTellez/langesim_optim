@@ -17,7 +17,11 @@ def test_plot_test_hist():
     tf = 0.100
     tot_steps = int(tf / dt)
     sim = Simulator(dt=dt, tot_steps=tot_steps)
-    fig = plot_test_hist(tot_sims, ki, kf, sim)
+    fig = plot_test_hist(tot_sims=tot_sims,
+    sim=sim,
+    ki=ki,
+    kf=kf,
+    )
     # Test case 1: Test the output type of the function
     assert isinstance(fig, plt.Figure)
 

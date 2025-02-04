@@ -86,9 +86,11 @@ def train_loop(
 
 def plot_test_hist(
     tot_sims: int,
+    sim: Simulator,
     ki: float,
     kf: float,
-    sim: Simulator,
+    ci: Optional[float] = 0.0,
+    cf: Optional[float] = 0.0,
     device=device,
     xrange=1.0,
     xpoints=200,
@@ -105,11 +107,13 @@ def plot_test_hist(
         tot_sims (int): total simulations to be performed.
         ki (float): initial stiffness
         kf (float): final stiffness
+        ci (float, optional): initial center. Defaults to 0.0.
+        cf (float, optional): final center. Defaults to 0.0.
         sim (Simulator): simulator module
         device (str): device to run on cpu or cuda
     """
     with torch.inference_mode():
-        x0 = torch.randn(tot_sims, device=device) * ki**-0.5
+        x0 = torch.randn(tot_sims, device=device) * ki**-0.5 + ci
         if sim.compute_work_heat:
             xtest, wf, qf = sim(x0)
         else:
@@ -118,9 +122,9 @@ def plot_test_hist(
     fig = plt.figure()
     plt.hist(xtest.cpu().detach(), bins=bins, density=True, label=final_label)
     xs = torch.linspace(-xrange, xrange, xpoints)
-    pdf_final = gaussian(xs, var=1.0 / kf).detach()
+    pdf_final = gaussian(xs, var=1.0 / kf, center=cf).detach()
     plt.plot(xs, pdf_final, label=expect_label)
-    pdf_i = gaussian(xs, var=1.0 / ki).detach()
+    pdf_i = gaussian(xs, var=1.0 / ki, center=ci).detach()
     plt.plot(xs, pdf_i, label=init_label)
     plt.title(title)
     plt.legend(fontsize="small")
@@ -143,14 +147,43 @@ def plot_protocols(
     title=r"Stiffness $\kappa$",
     times=None,
     yrange=None,
+    ylabel=r"$\kappa$",
     grid=True,
     time_ticks=None,
     y_ticks=None,
     y_ticklabels=None,
+    protocol_name="kappa"
 ):
+    """Plots a protocol of the simulator sim.force.protocol_name(t) and the theoretical protocol k_comp(t).
+
+    Args:
+        sim (Simulator): The simulator object.
+        ki: The initial value of stiffness.
+        kf: The final value of stiffness.
+        tf: The final time of the protocol.
+        k_comp: A function that computes the theoretical value of kappa(t) given the initial and final stiffness and the final time.
+        t_steps: The number of steps to compute the protocol.
+        sim_label: The label for the simulator protocol.
+        comp_label: The label for the theoretical protocol.
+        title: The title of the plot.
+        times: The times to compute the protocol.
+        yrange: The range of the y-axis.
+        grid: Whether to show the grid.
+        time_ticks: The ticks for the time axis.
+        y_ticks: The ticks for the y-axis.
+        y_ticklabels: The labels for the y-axis ticks.
+        protocol_name: The name of the protocol to plot. Defaults to "kappa".
+
+    Returns:
+        Figure: The matplotlib figure object.
+    """
+
     if times is None:
         times = np.linspace(0, tf, t_steps)
-    kappa = np.array([sim.force.kappa(t).item() for t in times])
+    protocol = getattr(sim.force, protocol_name, None)
+    if protocol is None:
+        raise ValueError(f"Protocol {protocol_name} not found in the simulator force.")
+    kappa = np.array([protocol(t).item() for t in times])
 
     fig = plt.figure()
     plt.plot(times, kappa, label=sim_label)
@@ -161,7 +194,7 @@ def plot_protocols(
     if yrange is not None:
         plt.ylim(yrange)
     plt.xlabel("t")
-    plt.ylabel(r"$\kappa$")
+    plt.ylabel(ylabel)
     plt.title(title)
     plt.legend()
     plt.grid(grid)
@@ -241,10 +274,10 @@ def train_loop_snapshots(
     ]
     plots = [
         plot_test_hist(
-            tot_sims,
-            ki,
-            kf,
-            sim,
+            tot_sims=tot_sims,
+            sim=sim,
+            ki=ki,
+            kf=kf,
             device=device,
             xrange=xrange,
             grid=grid_histo,
@@ -273,10 +306,10 @@ def train_loop_snapshots(
         )
         epoch += epochs_to_do
         protocol = plot_protocols(
-            sim,
-            ki,
-            kf,
-            tf,
+            sim=sim,
+            ki=ki,
+            kf=kf,
+            tf=tf,
             k_comp=None,
             t_steps=200,
             sim_label=f"Trained at epoch={epoch}",
@@ -289,10 +322,10 @@ def train_loop_snapshots(
             y_ticklabels=y_ticklabels,
         )
         pl = plot_test_hist(
-            tot_sims,
-            ki,
-            kf,
-            sim,
+            tot_sims=tot_sims,
+            sim=sim,
+            ki=ki,
+            kf=kf,
             device=device,
             xrange=xrange,
             grid=grid_histo,
