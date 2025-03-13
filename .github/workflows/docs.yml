@@ -37,6 +37,7 @@ jobs:
         
       - name: Build documentation
         run: |
+          poetry shell
           cd docs
           make html
           
