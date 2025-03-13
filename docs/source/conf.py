@@ -3,7 +3,7 @@ import sys
 sys.path.insert(0, os.path.abspath('../..'))
 
 # Project information
-project = 'langesim-optim'
+project = 'langesim_optim'
 copyright = '2025, Gabriel Tellez'
 author = 'Gabriel Tellez'
 release = '0.1.0'
@@ -45,11 +45,15 @@ napoleon_use_rtype = True
 napoleon_type_aliases = None
 
 # GitHub Pages settings
-html_baseurl = os.environ.get('GITHUB_REPOSITORY', '').replace('_', '/')
+github_repo = os.environ.get('GITHUB_REPOSITORY', 'GabrielTellez/langesim_optim')
+github_user = github_repo.split('/')[0] if '/' in github_repo else 'GabrielTellez'
+github_repo_name = github_repo.split('/')[1] if '/' in github_repo else 'langesim_optim'
+
+html_baseurl = f'/{github_repo_name}/'
 html_context = {
     'display_github': True,
-    'github_user': os.environ.get('GITHUB_REPOSITORY', '').split('/')[0],
-    'github_repo': os.environ.get('GITHUB_REPOSITORY', '').split('/')[1],
+    'github_user': github_user,
+    'github_repo': github_repo_name,
     'github_version': 'main',
     'conf_py_path': '/docs/source/',
 } 

@@ -4,7 +4,7 @@ Installation Guide
 Requirements
 -----------
 
-Before installing ``langesim-optim``, ensure you have the following prerequisites:
+Before installing ``langesim_optim``, ensure you have the following prerequisites:
 
 * Python 3.9 or higher
 * Poetry package manager
@@ -28,8 +28,8 @@ Installation Steps
 
    .. code-block:: bash
 
-      git clone <repository-url>
-      cd langesim-optim
+      git clone https://github.com/GabrielTellez/langesim_optim.git
+      cd langesim_optim
 
 2. Install using Poetry:
 
