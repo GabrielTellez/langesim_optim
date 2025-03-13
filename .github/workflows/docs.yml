@@ -37,7 +37,7 @@ jobs:
         
       - name: Build documentation
         run: |
-          poetry shell
+          eval $(poetry env activate)
           cd docs
           make html
           
