@@ -46,12 +46,12 @@ class VariableStiffnessHarmonicForcePolynomial(BaseHarmonicForce):
 
     def kappa(self, t):
         """
-        Stiffness as a function polynomial function of time.
+        Stiffness as a polynomial function of time.
         If continuous = False:
-            kappa(t) = sum coef_list[i] * t^i
+            kappa(t) = sum(coef_list[i] * t^i) for i in range(len(coef_list))
         If continuous = True:
-            kappa(t) = kapppai + (t/tf) * (kappaf - kappai)
-                        + (t/tf)*(1-t/tf)* sum coef_list[i] * t^i
+            kappa(t) = kappai + (t/tf) * (kappaf - kappai)
+                        + (t/tf)*(1-t/tf)* sum(coef_list[i] * t^i) for i in range(len(coef_list))
         If normalized: 
             use t/tf instead of t in the polynomial.
 

@@ -21,7 +21,7 @@ class BaseForce(nn.Module):
 
     def force(self, x: torch.tensor, t: torch.tensor) -> torch.tensor:
         """
-        This sould be implemented by inherited classes.
+        This should be implemented by inherited classes.
         This base class returns a zero force.
 
 
@@ -37,7 +37,7 @@ class BaseForce(nn.Module):
 
     def potential(self, x: torch.tensor, t: torch.tensor) -> torch.tensor:
         """
-        This sould be implemented by inherited classes.
+        This should be implemented by inherited classes.
         Although force = - grad potential, it is more efficient (speed and memory) to compute them apart analytically.
         This base class returns a zero potential.
 
@@ -57,7 +57,13 @@ class BaseForce(nn.Module):
 
 
 class Simulator(nn.Module):
-    """Simulator class for Langevin dynamics of a harmonic oscillator."""
+    """Simulator class for Langevin dynamics of a harmonic oscillator.
+
+    This class implements a numerical solver for the overdamped Langevin equation:
+    dx/dt = F(x,t) + sqrt(2*noise_scaler)*dW(t)
+    where F(x,t) is the applied force, noise_scaler is diffusion coefficient D=k_B*T/gamma,
+    and dW(t) is Gaussian white noise.
+    """
 
     def __init__(
         self,
@@ -75,7 +81,7 @@ class Simulator(nn.Module):
             dt (float, optional): time step. Defaults to 0.001.
             tot_steps (int, optional): total steps of each simulation. Defaults to 10000.
             noise_scaler (float, optional): brownian noise scale k_B T. Defaults to 1.0.
-            force (BaseForce, optional): force excerted on the particle. Defaults to 0.0.
+            force (BaseForce, optional): force exerted on the particle. Defaults to 0.0.
             device (str): device to run on (cpu or cuda).
             compute_work_heat (bool): compute work and heat during simulation. Defaults to False.
         """
@@ -407,7 +413,7 @@ class VariableStiffnessCenterHarmonicForce(VariableStiffnessHarmonicForce, Varia
             steps (int, optional): number time steps where the stiffness value is given
             k (list, optional): the initial stiffness given by a list of `steps` values
             center_list (list, optional): the initial center given by a list of `steps` values
-            countinuous (bool): whether the stiffness and center are continuous at initial and final times,
+            continuous (bool): whether the stiffness and center are continuous at initial and final times,
             thus equal to kappai, kappaf, centeri and centerf.
         """
         BaseForce.__init__(self)

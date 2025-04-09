@@ -1,4 +1,18 @@
 def interpolate(t, yi, yf, ti, tf, ylist, continuous=True):
+    """Performs linear interpolation between points.
+
+    Args:
+        t: time at which to interpolate
+        yi: initial value at t=ti
+        yf: final value at t=tf
+        ti: initial time
+        tf: final time
+        ylist: list of values to interpolate between
+        continuous: if True, add yi and yf to the beginning and end of ylist
+
+    Returns:
+        The interpolated value at time t
+    """
     if t <= ti:
         return yi
     if t >= tf:
@@ -47,14 +61,7 @@ class Interpolator:
         self.tf = tf
         self.continuous = continuous
         self.ylist = ylist
-        # if continuous:
-        #     # warning: self.ylist = [yi] + ylist + [yf] does not concatenate numpy arrays
-        #     self.ylist = [yi, *ylist, yf]
-        # else:
-        #     self.ylist = ylist
-        # self.N = len(self.ylist)
-        # if self.N > 1:
-        #     self.dt = (self.tf - self.ti) / (self.N - 1)
+
 
     def __call__(self, t):
         return interpolate(
