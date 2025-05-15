@@ -1,7 +1,12 @@
 Welcome to langesim_optim's documentation!
 =====================================
 
-``langesim_optim`` is a Python library for running differentiable Langevin simulations of a Brownian particle subjected to time-dependent potentials with trainable parameters. This library enables optimization of equilibration time and work through gradient-based methods.
+``langesim_optim`` is a Python library for running differentiable Langevin
+simulations of a Brownian particle subjected to time-dependent potentials with
+trainable parameters. This library enables optimization of equilibration time
+and work through gradient-based methods. See the article `A machine learning
+approach to fast thermal equilibration
+<https://arxiv.org/abs/2504.08080>`_ for more details.
 
 Features
 --------
