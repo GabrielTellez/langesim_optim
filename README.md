@@ -1,6 +1,10 @@
 # Langevin Simulations Optimizer
 
-A Python library for running differentiable Langevin simulations of a Brownian particle subjected to time-dependent potentials with trainable parameters. This library enables optimization of equilibration time and work through gradient-based methods.
+A Python library for running differentiable Langevin simulations of a Brownian
+particle subjected to time-dependent potentials with trainable parameters. This
+library enables optimization of equilibration time and work through
+gradient-based methods. For details see:
+D. Rengifo, G Téllez, [A machine learning approach to fast thermal equilibration](https://arxiv.org/abs/2504.08080)
 
 ## Features
 
