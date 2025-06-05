@@ -13,7 +13,7 @@ D. Rengifo, G Téllez, [A machine learning approach to fast thermal equilibratio
   - Harmonic forces with variable stiffness
   - Harmonic forces with variable center
   - Combined variable stiffness and center forces
-  - Hermonic forces with stiffness and center given by polynomial functions of time.
+  - Harmonic forces with stiffness and center given by polynomial functions of time.
 - **Optimization Objectives**:
   - Equilibration time optimization
   - Work optimization
